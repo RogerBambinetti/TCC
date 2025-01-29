@@ -136,6 +136,33 @@ void generateCube(std::vector<float> &vertices, std::vector<unsigned int> &indic
     indices.assign(indicesArray, indicesArray + 36);
 }
 
+// Function to generate a grid
+void generateGrid(std::vector<float> &vertices, std::vector<unsigned int> &indices, float size, int divisions)
+{
+    float step = size / divisions;
+    for (int i = -divisions; i <= divisions; ++i)
+    {
+        vertices.push_back(i * step);
+        vertices.push_back(0.0f);
+        vertices.push_back(-size);
+        vertices.push_back(i * step);
+        vertices.push_back(0.0f);
+        vertices.push_back(size);
+
+        vertices.push_back(-size);
+        vertices.push_back(0.0f);
+        vertices.push_back(i * step);
+        vertices.push_back(size);
+        vertices.push_back(0.0f);
+        vertices.push_back(i * step);
+    }
+
+    for (unsigned int i = 0; i < vertices.size() / 3; ++i)
+    {
+        indices.push_back(i);
+    }
+}
+
 // Global variables for mouse interaction
 bool isDragging = false;
 int selectedCube = -1;
@@ -250,6 +277,11 @@ int main()
     std::vector<unsigned int> cubeIndices;
     generateCube(cubeVertices, cubeIndices, 0.5f);
 
+    // Generate grid
+    std::vector<float> gridVertices;
+    std::vector<unsigned int> gridIndices;
+    generateGrid(gridVertices, gridIndices, 5.0f, 10);
+
     // Create VAO, VBO, and EBO for sphere
     GLuint sphereVAO, sphereVBO, sphereEBO;
     glGenVertexArrays(1, &sphereVAO);
@@ -284,6 +316,23 @@ int main()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
+    // Create VAO, VBO, and EBO for grid
+    GLuint gridVAO, gridVBO, gridEBO;
+    glGenVertexArrays(1, &gridVAO);
+    glGenBuffers(1, &gridVBO);
+    glGenBuffers(1, &gridEBO);
+
+    glBindVertexArray(gridVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, gridVBO);
+    glBufferData(GL_ARRAY_BUFFER, gridVertices.size() * sizeof(float), gridVertices.data(), GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gridEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, gridIndices.size() * sizeof(unsigned int), gridIndices.data(), GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+
     // Unbind VAO
     glBindVertexArray(0);
 
@@ -306,6 +355,12 @@ int main()
         // Pass view and projection matrices to the shader
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+        // Render grid
+        glm::mat4 gridModel = glm::mat4(1.0f);
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(gridModel));
+        glBindVertexArray(gridVAO);
+        glDrawElements(GL_LINES, gridIndices.size(), GL_UNSIGNED_INT, 0);
 
         // Render sphere
         glm::mat4 sphereModel = glm::mat4(1.0f);
@@ -337,6 +392,10 @@ int main()
     glDeleteVertexArrays(1, &cubeVAO);
     glDeleteBuffers(1, &cubeVBO);
     glDeleteBuffers(1, &cubeEBO);
+
+    glDeleteVertexArrays(1, &gridVAO);
+    glDeleteBuffers(1, &gridVBO);
+    glDeleteBuffers(1, &gridEBO);
 
     glDeleteProgram(shaderProgram);
 
