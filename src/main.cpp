@@ -270,7 +270,7 @@ int main()
     // Generate sphere
     std::vector<float> sphereVertices;
     std::vector<unsigned int> sphereIndices;
-    generateSphere(sphereVertices, sphereIndices, 1.0f, 36, 18);
+    generateSphere(sphereVertices, sphereIndices, 0.5f, 36, 18);
 
     // Generate cube
     std::vector<float> cubeVertices;
