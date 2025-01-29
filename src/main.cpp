@@ -31,6 +31,15 @@ void main()
 }
 )";
 
+// Cube positions
+glm::vec3 cubePositions[6] = {
+    glm::vec3(2.0f, 0.0f, 0.0f),
+    glm::vec3(-2.0f, 0.0f, 0.0f),
+    glm::vec3(0.0f, 2.0f, 0.0f),
+    glm::vec3(0.0f, -2.0f, 0.0f),
+    glm::vec3(0.0f, 0.0f, 2.0f),
+    glm::vec3(0.0f, 0.0f, -2.0f)};
+
 // Function to compile shaders and link them into a program
 GLuint compileShaders(const char *vertexSource, const char *fragmentSource)
 {
@@ -127,6 +136,66 @@ void generateCube(std::vector<float> &vertices, std::vector<unsigned int> &indic
     indices.assign(indicesArray, indicesArray + 36);
 }
 
+// Global variables for mouse interaction
+bool isDragging = false;
+int selectedCube = -1;
+glm::vec3 initialMousePos;
+glm::vec3 initialCubePos;
+
+// Mouse callback function
+void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods, const glm::mat4 &view, const glm::mat4 &projection)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT)
+    {
+        if (action == GLFW_PRESS)
+        {
+            isDragging = true;
+
+            // Get mouse position in screen coordinates
+            double xpos, ypos;
+            glfwGetCursorPos(window, &xpos, &ypos);
+            initialMousePos = glm::vec3(xpos, ypos, 0.0f);
+
+            // Determine which cube is being clicked (if any)
+            // For simplicity, we assume the cubes are aligned along the axes
+            // and use a simple distance check to select the closest cube.
+            // In a real application, you would use raycasting to determine the clicked object.
+            float minDistance = FLT_MAX;
+            for (int i = 0; i < 6; ++i)
+            {
+                glm::vec3 cubePos = cubePositions[i];
+                glm::vec3 screenPos = glm::project(cubePos, view, projection, glm::vec4(0, 0, 800, 600));
+                float distance = glm::length(glm::vec2(screenPos.x, screenPos.y) - glm::vec2(xpos, ypos));
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    selectedCube = i;
+                    initialCubePos = cubePos;
+                }
+            }
+        }
+        else if (action == GLFW_RELEASE)
+        {
+            isDragging = false;
+            selectedCube = -1;
+        }
+    }
+}
+
+// Mouse motion callback function
+void cursorPosCallback(GLFWwindow *window, double xpos, double ypos)
+{
+    if (isDragging && selectedCube != -1)
+    {
+        // Calculate the change in mouse position
+        glm::vec3 currentMousePos = glm::vec3(xpos, ypos, 0.0f);
+        glm::vec3 delta = currentMousePos - initialMousePos;
+
+        // Update the cube's position based on the mouse movement
+        cubePositions[selectedCube] = initialCubePos + glm::vec3(delta.x * 0.01f, -delta.y * 0.01f, 0.0f);
+    }
+}
+
 int main()
 {
     // Initialize GLFW
@@ -159,6 +228,14 @@ int main()
         std::cerr << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+
+    // Set mouse callbacks
+    glfwSetMouseButtonCallback(window, [](GLFWwindow *window, int button, int action, int mods)
+                               {
+        glm::mat4 view = glm::lookAt(glm::vec3(5.0f, 5.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+        mouseButtonCallback(window, button, action, mods, view, projection); });
+    glfwSetCursorPosCallback(window, cursorPosCallback);
 
     // Compile shaders
     GLuint shaderProgram = compileShaders(vertexShaderSource, fragmentShaderSource);
@@ -237,17 +314,9 @@ int main()
         glDrawElements(GL_TRIANGLES, sphereIndices.size(), GL_UNSIGNED_INT, 0);
 
         // Render cubes
-        float cubePositions[6][3] = {
-            {2.0f, 0.0f, 0.0f},
-            {-2.0f, 0.0f, 0.0f},
-            {0.0f, 2.0f, 0.0f},
-            {0.0f, -2.0f, 0.0f},
-            {0.0f, 0.0f, 2.0f},
-            {0.0f, 0.0f, -2.0f}};
-
         for (int i = 0; i < 6; ++i)
         {
-            glm::mat4 cubeModel = glm::translate(glm::mat4(1.0f), glm::vec3(cubePositions[i][0], cubePositions[i][1], cubePositions[i][2]));
+            glm::mat4 cubeModel = glm::translate(glm::mat4(1.0f), cubePositions[i]);
             glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(cubeModel));
             glBindVertexArray(cubeVAO);
             glDrawElements(GL_TRIANGLES, cubeIndices.size(), GL_UNSIGNED_INT, 0);
