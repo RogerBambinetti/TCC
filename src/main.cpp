@@ -349,7 +349,10 @@ int main()
         glUseProgram(shaderProgram);
 
         // Create view and projection matrices
-        glm::mat4 view = glm::lookAt(glm::vec3(5.0f, 5.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 10.0f, 0.0f),  // Camera position above the scene
+                                     glm::vec3(0.0f, 0.0f, 0.0f),   // Looking at the center of the scene
+                                     glm::vec3(0.0f, 0.0f, -1.0f)); // Define "up" for the camera
+
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
 
         // Pass view and projection matrices to the shader
