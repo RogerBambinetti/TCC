@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -7,88 +8,90 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-using namespace std;
-
-// Camera settings
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);    // Camera position
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f); // Camera direction
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);     // Up vector
-float cameraSpeed = 0.05f;                            // Camera movement speed
-
-// Mouse settings
-float yaw = -90.0f;             // Yaw angle (left/right)
-float pitch = 0.0f;             // Pitch angle (up/down)
-float lastX = 400, lastY = 300; // Initial mouse position
-bool firstMouse = true;         // Track first mouse movement
-
-// Function prototypes
-void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-void processInput(GLFWwindow *window);
-void mouse_callback(GLFWwindow *window, double xpos, double ypos);
-
-// Function to generate sphere vertices and indices
-void generateSphere(float radius, int sectors, int stacks, std::vector<float> &vertices, std::vector<unsigned int> &indices)
+// Vertex Shader Source Code
+const char *vertexShaderSource = R"(
+#version 330 core
+layout(location = 0) in vec3 aPos;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+void main()
 {
-    const float PI = 3.14159265358979323846f;
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
+}
+)";
 
-    float x, y, z, xy;                           // vertex position
-    float nx, ny, nz, lengthInv = 1.0f / radius; // vertex normal
-    float s, t;                                  // vertex texCoord
+// Fragment Shader Source Code
+const char *fragmentShaderSource = R"(
+#version 330 core
+out vec4 FragColor;
+void main()
+{
+    FragColor = vec4(1.0, 1.0, 1.0, 1.0); // White color
+}
+)";
 
-    float sectorStep = 2 * PI / sectors;
-    float stackStep = PI / stacks;
+// Function to compile shaders and link them into a program
+GLuint compileShaders(const char *vertexSource, const char *fragmentSource)
+{
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &vertexSource, NULL);
+    glCompileShader(vertexShader);
+
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
+    glCompileShader(fragmentShader);
+
+    GLuint shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    return shaderProgram;
+}
+
+// Function to generate a sphere
+void generateSphere(std::vector<float> &vertices, std::vector<unsigned int> &indices, float radius, int sectors, int stacks)
+{
+    float x, y, z, xy;
+    float sectorStep = 2 * M_PI / sectors;
+    float stackStep = M_PI / stacks;
     float sectorAngle, stackAngle;
 
     for (int i = 0; i <= stacks; ++i)
     {
-        stackAngle = PI / 2 - i * stackStep; // starting from pi/2 to -pi/2
-        xy = radius * cosf(stackAngle);      // r * cos(u)
-        z = radius * sinf(stackAngle);       // r * sin(u)
+        stackAngle = M_PI / 2 - i * stackStep;
+        xy = radius * cosf(stackAngle);
+        z = radius * sinf(stackAngle);
 
         for (int j = 0; j <= sectors; ++j)
         {
-            sectorAngle = j * sectorStep; // starting from 0 to 2pi
-
-            // vertex position (x, y, z)
-            x = xy * cosf(sectorAngle); // r * cos(u) * cos(v)
-            y = xy * sinf(sectorAngle); // r * cos(u) * sin(v)
+            sectorAngle = j * sectorStep;
+            x = xy * cosf(sectorAngle);
+            y = xy * sinf(sectorAngle);
             vertices.push_back(x);
             vertices.push_back(y);
             vertices.push_back(z);
-
-            // normalized vertex normal (nx, ny, nz)
-            nx = x * lengthInv;
-            ny = y * lengthInv;
-            nz = z * lengthInv;
-            vertices.push_back(nx);
-            vertices.push_back(ny);
-            vertices.push_back(nz);
-
-            // vertex tex coord (s, t) range between [0, 1]
-            s = (float)j / sectors;
-            t = (float)i / stacks;
-            vertices.push_back(s);
-            vertices.push_back(t);
         }
     }
 
-    // generate indices
     int k1, k2;
     for (int i = 0; i < stacks; ++i)
     {
-        k1 = i * (sectors + 1); // beginning of current stack
-        k2 = k1 + sectors + 1;  // beginning of next stack
+        k1 = i * (sectors + 1);
+        k2 = k1 + sectors + 1;
 
         for (int j = 0; j < sectors; ++j, ++k1, ++k2)
         {
-            // 2 triangles per sector excluding first and last stacks
             if (i != 0)
             {
                 indices.push_back(k1);
                 indices.push_back(k2);
                 indices.push_back(k1 + 1);
             }
-
             if (i != (stacks - 1))
             {
                 indices.push_back(k1 + 1);
@@ -99,223 +102,176 @@ void generateSphere(float radius, int sectors, int stacks, std::vector<float> &v
     }
 }
 
+// Function to generate a cube
+void generateCube(std::vector<float> &vertices, std::vector<unsigned int> &indices, float size)
+{
+    float verticesArray[] = {
+        -size, -size, -size,
+        size, -size, -size,
+        size, size, -size,
+        -size, size, -size,
+        -size, -size, size,
+        size, -size, size,
+        size, size, size,
+        -size, size, size};
+
+    unsigned int indicesArray[] = {
+        0, 1, 2, 2, 3, 0,
+        4, 5, 6, 6, 7, 4,
+        0, 1, 5, 5, 4, 0,
+        2, 3, 7, 7, 6, 2,
+        0, 3, 7, 7, 4, 0,
+        1, 2, 6, 6, 5, 1};
+
+    vertices.assign(verticesArray, verticesArray + 24);
+    indices.assign(indicesArray, indicesArray + 36);
+}
+
 int main()
 {
+    // Initialize GLFW
     if (!glfwInit())
     {
-        cout << "Failed to initialize GLFW" << endl;
+        std::cerr << "Failed to initialize GLFW" << std::endl;
         return -1;
     }
 
-    glfwWindowHint(GLFW_SAMPLES, 4);
+    // Set OpenGL version to 3.3
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow *window;
-    window = glfwCreateWindow(800, 600, "Movable Camera", NULL, NULL);
-    if (window == NULL)
+    // Create a windowed mode window and its OpenGL context
+    GLFWwindow *window = glfwCreateWindow(800, 600, "3D Sphere and Cubes", NULL, NULL);
+    if (!window)
     {
-        cout << "Failed to open GLFW window" << endl;
+        std::cerr << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
         return -1;
     }
+
+    // Make the window's context current
     glfwMakeContextCurrent(window);
 
+    // Load all OpenGL functions using GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        cout << "Failed to initialize GLAD" << endl;
+        std::cerr << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
 
-    glViewport(0, 0, 800, 600);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);            // Set mouse callback
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // Hide and capture mouse
+    // Compile shaders
+    GLuint shaderProgram = compileShaders(vertexShaderSource, fragmentShaderSource);
 
-    // Generate sphere vertices and indices
-    std::vector<float> vertices;
-    std::vector<unsigned int> indices;
-    generateSphere(1.0f, 36, 18, vertices, indices);
+    // Generate sphere
+    std::vector<float> sphereVertices;
+    std::vector<unsigned int> sphereIndices;
+    generateSphere(sphereVertices, sphereIndices, 1.0f, 36, 18);
 
-    // Create VAO, VBO, and EBO
-    unsigned int VAO, VBO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
+    // Generate cube
+    std::vector<float> cubeVertices;
+    std::vector<unsigned int> cubeIndices;
+    generateCube(cubeVertices, cubeIndices, 0.5f);
 
-    glBindVertexArray(VAO);
+    // Create VAO, VBO, and EBO for sphere
+    GLuint sphereVAO, sphereVBO, sphereEBO;
+    glGenVertexArrays(1, &sphereVAO);
+    glGenBuffers(1, &sphereVBO);
+    glGenBuffers(1, &sphereEBO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
+    glBindVertexArray(sphereVAO);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, sphereVBO);
+    glBufferData(GL_ARRAY_BUFFER, sphereVertices.size() * sizeof(float), sphereVertices.data(), GL_STATIC_DRAW);
 
-    // Position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sphereEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphereIndices.size() * sizeof(unsigned int), sphereIndices.data(), GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
-    // Normal attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
+    // Create VAO, VBO, and EBO for cube
+    GLuint cubeVAO, cubeVBO, cubeEBO;
+    glGenVertexArrays(1, &cubeVAO);
+    glGenBuffers(1, &cubeVBO);
+    glGenBuffers(1, &cubeEBO);
 
-    // Texture coordinate attribute
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
+    glBindVertexArray(cubeVAO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+    glBufferData(GL_ARRAY_BUFFER, cubeVertices.size() * sizeof(float), cubeVertices.data(), GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, cubeIndices.size() * sizeof(unsigned int), cubeIndices.data(), GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+
+    // Unbind VAO
     glBindVertexArray(0);
-
-    // Shader source code
-    const char *vertexShaderSource = R"(
-        #version 330 core
-        layout (location = 0) in vec3 aPos;
-        layout (location = 1) in vec3 aNormal;
-        layout (location = 2) in vec2 aTexCoord;
-        out vec3 FragPos;
-        out vec3 Normal;
-        out vec2 TexCoord;
-        uniform mat4 model;
-        uniform mat4 view;
-        uniform mat4 projection;
-        void main()
-        {
-            FragPos = vec3(model * vec4(aPos, 1.0));
-            Normal = mat3(transpose(inverse(model))) * aNormal;
-            TexCoord = aTexCoord;
-            gl_Position = projection * view * model * vec4(aPos, 1.0);
-        }
-    )";
-
-    const char *fragmentShaderSource = R"(
-        #version 330 core
-        out vec4 FragColor;
-        in vec3 FragPos;
-        in vec3 Normal;
-        in vec2 TexCoord;
-        void main()
-        {
-            FragColor = vec4(0.5, 0.5, 0.5, 1.0); // Gray color
-        }
-    )";
-
-    // Compile vertex shader
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-
-    // Compile fragment shader
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-
-    // Link shaders
-    unsigned int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
 
     // Enable depth testing
     glEnable(GL_DEPTH_TEST);
 
-    // Render loop
+    // Main loop
     while (!glfwWindowShouldClose(window))
     {
-        // Input handling
-        processInput(window);
-
-        // Clear screen
+        // Clear the color and depth buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Use shader program
+        // Use the shader program
         glUseProgram(shaderProgram);
 
-        // Create transformations
-        glm::mat4 model = glm::mat4(1.0f); // Identity matrix
-        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        // Create view and projection matrices
+        glm::mat4 view = glm::lookAt(glm::vec3(5.0f, 5.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
 
-        // Pass matrices to shader
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        // Pass view and projection matrices to the shader
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-        // Bind VAO and draw sphere
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+        // Render sphere
+        glm::mat4 sphereModel = glm::mat4(1.0f);
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(sphereModel));
+        glBindVertexArray(sphereVAO);
+        glDrawElements(GL_TRIANGLES, sphereIndices.size(), GL_UNSIGNED_INT, 0);
 
-        // Swap buffers and poll events
+        // Render cubes
+        float cubePositions[6][3] = {
+            {2.0f, 0.0f, 0.0f},
+            {-2.0f, 0.0f, 0.0f},
+            {0.0f, 2.0f, 0.0f},
+            {0.0f, -2.0f, 0.0f},
+            {0.0f, 0.0f, 2.0f},
+            {0.0f, 0.0f, -2.0f}};
+
+        for (int i = 0; i < 6; ++i)
+        {
+            glm::mat4 cubeModel = glm::translate(glm::mat4(1.0f), glm::vec3(cubePositions[i][0], cubePositions[i][1], cubePositions[i][2]));
+            glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(cubeModel));
+            glBindVertexArray(cubeVAO);
+            glDrawElements(GL_TRIANGLES, cubeIndices.size(), GL_UNSIGNED_INT, 0);
+        }
+
+        // Swap front and back buffers
         glfwSwapBuffers(window);
+
+        // Poll for and process events
         glfwPollEvents();
     }
 
-    // Cleanup
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
+    // Clean up
+    glDeleteVertexArrays(1, &sphereVAO);
+    glDeleteBuffers(1, &sphereVBO);
+    glDeleteBuffers(1, &sphereEBO);
+
+    glDeleteVertexArrays(1, &cubeVAO);
+    glDeleteBuffers(1, &cubeVBO);
+    glDeleteBuffers(1, &cubeEBO);
+
     glDeleteProgram(shaderProgram);
 
+    // Terminate GLFW
     glfwTerminate();
     return 0;
-}
-
-// Input handling
-void processInput(GLFWwindow *window)
-{
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        cameraPos += cameraSpeed * cameraFront;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPos -= cameraSpeed * cameraFront;
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-}
-
-// Mouse callback
-void mouse_callback(GLFWwindow *window, double xpos, double ypos)
-{
-    if (firstMouse)
-    {
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
-    }
-
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // Reversed since y-coordinates go from bottom to top
-    lastX = xpos;
-    lastY = ypos;
-
-    float sensitivity = 0.1f;
-    xoffset *= sensitivity;
-    yoffset *= sensitivity;
-
-    yaw += xoffset;
-    pitch += yoffset;
-
-    // Constrain pitch to avoid flipping
-    if (pitch > 89.0f)
-        pitch = 89.0f;
-    if (pitch < -89.0f)
-        pitch = -89.0f;
-
-    // Update camera front vector
-    glm::vec3 front;
-    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    front.y = sin(glm::radians(pitch));
-    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraFront = glm::normalize(front);
-}
-
-// Window resize callback
-void framebuffer_size_callback(GLFWwindow *window, int width, int height)
-{
-    glViewport(0, 0, width, height);
 }
