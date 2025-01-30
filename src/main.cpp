@@ -33,10 +33,10 @@ void main()
 
 // Cube positions
 glm::vec3 cubePositions[6] = {
-    glm::vec3(2.0f, 0.0f, 0.0f),
-    glm::vec3(-2.0f, 0.0f, 0.0f),
-    glm::vec3(0.0f, 2.0f, 0.0f),
-    glm::vec3(0.0f, -2.0f, 0.0f),
+    glm::vec3(2.0f, 0.0f, -2.0f),
+    glm::vec3(-2.0f, 0.0f, -2.0f),
+    glm::vec3(2.0f, 0.0f, 2.0f),
+    glm::vec3(-2.0f, 0.0f, 2.0f),
     glm::vec3(0.0f, 0.0f, 2.0f),
     glm::vec3(0.0f, 0.0f, -2.0f)};
 
@@ -238,7 +238,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create a windowed mode window and its OpenGL context
-    GLFWwindow *window = glfwCreateWindow(800, 600, "3D Sphere and Cubes", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(800, 600, "3D GUI", NULL, NULL);
     if (!window)
     {
         std::cerr << "Failed to create GLFW window" << std::endl;
