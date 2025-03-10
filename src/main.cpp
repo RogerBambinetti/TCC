@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <cfloat>
 
 // Vertex Shader Source Code
 const char *vertexShaderSource = R"(
@@ -25,9 +26,14 @@ void main()
 const char *fragmentShaderSource = R"(
 #version 330 core
 out vec4 FragColor;
+uniform bool isSelected;
 void main()
 {
-    FragColor = vec4(1.0, 1.0, 1.0, 1.0); // White color
+    if (isSelected) {
+        FragColor = vec4(1.0, 0.5, 0.5, 1.0); // Light red when selected
+    } else {
+        FragColor = vec4(1.0, 1.0, 1.0, 1.0); // White color
+    }
 }
 )";
 
@@ -40,6 +46,18 @@ glm::vec3 cubePositions[6] = {
     glm::vec3(0.0f, 0.0f, 2.0f),
     glm::vec3(0.0f, 0.0f, -2.0f)};
 
+// Global variables for viewing
+glm::mat4 viewMatrix;
+glm::mat4 projectionMatrix;
+int windowWidth = 800;
+int windowHeight = 600;
+
+// Global variables for mouse interaction
+bool isDragging = false;
+int selectedCube = -1;
+glm::vec2 lastMousePos;
+float dragPlaneY = 0.0f; // Y position of the drag plane
+
 // Function to compile shaders and link them into a program
 GLuint compileShaders(const char *vertexSource, const char *fragmentSource)
 {
@@ -47,14 +65,43 @@ GLuint compileShaders(const char *vertexSource, const char *fragmentSource)
     glShaderSource(vertexShader, 1, &vertexSource, NULL);
     glCompileShader(vertexShader);
 
+    // Check for vertex shader compilation errors
+    int success;
+    char infoLog[512];
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+        std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
+                  << infoLog << std::endl;
+    }
+
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
     glCompileShader(fragmentShader);
+
+    // Check for fragment shader compilation errors
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+        std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"
+                  << infoLog << std::endl;
+    }
 
     GLuint shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
+
+    // Check for program linking errors
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if (!success)
+    {
+        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
+                  << infoLog << std::endl;
+    }
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
@@ -163,48 +210,145 @@ void generateGrid(std::vector<float> &vertices, std::vector<unsigned int> &indic
     }
 }
 
-// Global variables for mouse interaction
-bool isDragging = false;
-int selectedCube = -1;
-glm::vec3 initialMousePos;
-glm::vec3 initialCubePos;
+// Function to convert screen coordinates to world coordinates
+glm::vec3 screenToWorld(double screenX, double screenY, float worldZ)
+{
+    // Viewport transform
+    glm::vec4 viewport = glm::vec4(0, 0, windowWidth, windowHeight);
 
-// Mouse callback function
-void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods, const glm::mat4 &view, const glm::mat4 &projection)
+    // Inverse project from screen to world
+    glm::vec3 screenPos(screenX, windowHeight - screenY, 0.0f); // Invert Y for OpenGL coordinate system
+
+    // Get near and far points of a ray from camera through cursor
+    glm::vec3 nearPoint = glm::unProject(
+        glm::vec3(screenPos.x, screenPos.y, 0.0f),
+        viewMatrix,
+        projectionMatrix,
+        viewport);
+
+    glm::vec3 farPoint = glm::unProject(
+        glm::vec3(screenPos.x, screenPos.y, 1.0f),
+        viewMatrix,
+        projectionMatrix,
+        viewport);
+
+    // Calculate the ray direction
+    glm::vec3 rayDir = glm::normalize(farPoint - nearPoint);
+
+    // Calculate t where the ray intersects the Y plane
+    float t = (worldZ - nearPoint.y) / rayDir.y;
+
+    // Calculate the intersection point
+    glm::vec3 intersectionPoint = nearPoint + rayDir * t;
+
+    return intersectionPoint;
+}
+
+// Ray-Cube Intersection test
+bool rayCubeIntersection(const glm::vec3 &rayOrigin, const glm::vec3 &rayDir, const glm::vec3 &cubePos, float cubeSize, float &distance)
+{
+    glm::vec3 min = cubePos - glm::vec3(cubeSize);
+    glm::vec3 max = cubePos + glm::vec3(cubeSize);
+
+    // Check for intersection with each axis-aligned plane
+    float tmin = (min.x - rayOrigin.x) / rayDir.x;
+    float tmax = (max.x - rayOrigin.x) / rayDir.x;
+
+    if (tmin > tmax)
+        std::swap(tmin, tmax);
+
+    float tymin = (min.y - rayOrigin.y) / rayDir.y;
+    float tymax = (max.y - rayOrigin.y) / rayDir.y;
+
+    if (tymin > tymax)
+        std::swap(tymin, tymax);
+
+    if ((tmin > tymax) || (tymin > tmax))
+        return false;
+
+    if (tymin > tmin)
+        tmin = tymin;
+
+    if (tymax < tmax)
+        tmax = tymax;
+
+    float tzmin = (min.z - rayOrigin.z) / rayDir.z;
+    float tzmax = (max.z - rayOrigin.z) / rayDir.z;
+
+    if (tzmin > tzmax)
+        std::swap(tzmin, tzmax);
+
+    if ((tmin > tzmax) || (tzmin > tmax))
+        return false;
+
+    if (tzmin > tmin)
+        tmin = tzmin;
+
+    if (tzmax < tmax)
+        tmax = tzmax;
+
+    // Set the distance to the nearest intersection
+    distance = tmin;
+
+    return true;
+}
+
+// Mouse button callback function
+void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_LEFT)
     {
         if (action == GLFW_PRESS)
         {
-            isDragging = true;
-
-            // Get mouse position in screen coordinates
             double xpos, ypos;
             glfwGetCursorPos(window, &xpos, &ypos);
-            initialMousePos = glm::vec3(xpos, ypos, 0.0f);
+            lastMousePos = glm::vec2(xpos, ypos);
 
-            // Determine which cube is being clicked (if any)
-            // For simplicity, we assume the cubes are aligned along the axes
-            // and use a simple distance check to select the closest cube.
-            // In a real application, you would use raycasting to determine the clicked object.
+            // Generate ray from camera position through mouse point
+            glm::vec4 viewport = glm::vec4(0, 0, windowWidth, windowHeight);
+            glm::vec3 nearPoint = glm::unProject(
+                glm::vec3(xpos, windowHeight - ypos, 0.0f),
+                viewMatrix,
+                projectionMatrix,
+                viewport);
+
+            glm::vec3 farPoint = glm::unProject(
+                glm::vec3(xpos, windowHeight - ypos, 1.0f),
+                viewMatrix,
+                projectionMatrix,
+                viewport);
+
+            glm::vec3 rayOrigin = nearPoint;
+            glm::vec3 rayDir = glm::normalize(farPoint - nearPoint);
+
+            // Find closest cube intersection
             float minDistance = FLT_MAX;
+            selectedCube = -1;
+
             for (int i = 0; i < 6; ++i)
             {
-                glm::vec3 cubePos = cubePositions[i];
-                glm::vec3 screenPos = glm::project(cubePos, view, projection, glm::vec4(0, 0, 800, 600));
-                float distance = glm::length(glm::vec2(screenPos.x, screenPos.y) - glm::vec2(xpos, ypos));
-                if (distance < minDistance)
+                float distance;
+                if (rayCubeIntersection(rayOrigin, rayDir, cubePositions[i], 0.5f, distance))
                 {
-                    minDistance = distance;
-                    selectedCube = i;
-                    initialCubePos = cubePos;
+                    if (distance < minDistance)
+                    {
+                        minDistance = distance;
+                        selectedCube = i;
+                    }
                 }
+            }
+
+            if (selectedCube != -1)
+            {
+                isDragging = true;
+
+                // Calculate the Y plane for dragging (use the cube's current Y position)
+                dragPlaneY = cubePositions[selectedCube].y;
             }
         }
         else if (action == GLFW_RELEASE)
         {
             isDragging = false;
-            selectedCube = -1;
         }
     }
 }
@@ -214,13 +358,46 @@ void cursorPosCallback(GLFWwindow *window, double xpos, double ypos)
 {
     if (isDragging && selectedCube != -1)
     {
-        // Calculate the change in mouse position
-        glm::vec3 currentMousePos = glm::vec3(xpos, ypos, 0.0f);
-        glm::vec3 delta = currentMousePos - initialMousePos;
+        // Calculate world position at the current mouse cursor on the drag plane
+        glm::vec4 viewport = glm::vec4(0, 0, windowWidth, windowHeight);
 
-        // Update the cube's position based on the mouse movement
-        cubePositions[selectedCube] = initialCubePos + glm::vec3(delta.x * 0.01f, -delta.y * 0.01f, 0.0f);
+        glm::vec3 nearPoint = glm::unProject(
+            glm::vec3(xpos, windowHeight - ypos, 0.0f),
+            viewMatrix,
+            projectionMatrix,
+            viewport);
+
+        glm::vec3 farPoint = glm::unProject(
+            glm::vec3(xpos, windowHeight - ypos, 1.0f),
+            viewMatrix,
+            projectionMatrix,
+            viewport);
+
+        glm::vec3 rayOrigin = nearPoint;
+        glm::vec3 rayDir = glm::normalize(farPoint - nearPoint);
+
+        // Calculate t where the ray intersects the Y plane
+        float t = (dragPlaneY - rayOrigin.y) / rayDir.y;
+
+        // Calculate the intersection point
+        glm::vec3 intersectionPoint = rayOrigin + rayDir * t;
+
+        // Update cube position, but maintain its Y coordinate
+        cubePositions[selectedCube].x = intersectionPoint.x;
+        cubePositions[selectedCube].z = intersectionPoint.z;
+
+        // Update last mouse position
+        lastMousePos = glm::vec2(xpos, ypos);
     }
+}
+
+// Framebuffer size callback
+void framebufferSizeCallback(GLFWwindow *window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+    windowWidth = width;
+    windowHeight = height;
+    projectionMatrix = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
 }
 
 int main()
@@ -238,7 +415,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create a windowed mode window and its OpenGL context
-    GLFWwindow *window = glfwCreateWindow(800, 600, "3D GUI", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(windowWidth, windowHeight, "3D GUI", NULL, NULL);
     if (!window)
     {
         std::cerr << "Failed to create GLFW window" << std::endl;
@@ -257,12 +434,9 @@ int main()
     }
 
     // Set mouse callbacks
-    glfwSetMouseButtonCallback(window, [](GLFWwindow *window, int button, int action, int mods)
-                               {
-        glm::mat4 view = glm::lookAt(glm::vec3(5.0f, 5.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-        mouseButtonCallback(window, button, action, mods, view, projection); });
+    glfwSetMouseButtonCallback(window, mouseButtonCallback);
     glfwSetCursorPosCallback(window, cursorPosCallback);
+    glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
     // Compile shaders
     GLuint shaderProgram = compileShaders(vertexShaderSource, fragmentShaderSource);
@@ -349,15 +523,18 @@ int main()
         glUseProgram(shaderProgram);
 
         // Create view and projection matrices
-        glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 10.0f, 0.0f),  // Camera position above the scene
-                                     glm::vec3(0.0f, 0.0f, 0.0f),   // Looking at the center of the scene
-                                     glm::vec3(0.0f, 0.0f, -1.0f)); // Define "up" for the camera
+        viewMatrix = glm::lookAt(glm::vec3(5.0f, 5.0f, 5.0f),  // Camera position
+                                 glm::vec3(0.0f, 0.0f, 0.0f),  // Looking at the center
+                                 glm::vec3(0.0f, 1.0f, 0.0f)); // Up vector
 
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+        projectionMatrix = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
 
         // Pass view and projection matrices to the shader
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+
+        // Set selection uniform to false for non-selected objects
+        glUniform1i(glGetUniformLocation(shaderProgram, "isSelected"), 0);
 
         // Render grid
         glm::mat4 gridModel = glm::mat4(1.0f);
@@ -374,6 +551,9 @@ int main()
         // Render cubes
         for (int i = 0; i < 6; ++i)
         {
+            // Set selection uniform
+            glUniform1i(glGetUniformLocation(shaderProgram, "isSelected"), (i == selectedCube) ? 1 : 0);
+
             glm::mat4 cubeModel = glm::translate(glm::mat4(1.0f), cubePositions[i]);
             glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(cubeModel));
             glBindVertexArray(cubeVAO);
