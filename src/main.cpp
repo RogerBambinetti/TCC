@@ -39,12 +39,12 @@ void main()
 
 // Cube positions
 glm::vec3 cubePositions[6] = {
-    glm::vec3(2.0f, 0.0f, -2.0f),
-    glm::vec3(-2.0f, 0.0f, -2.0f),
-    glm::vec3(2.0f, 0.0f, 2.0f),
-    glm::vec3(-2.0f, 0.0f, 2.0f),
-    glm::vec3(0.0f, 0.0f, 2.0f),
-    glm::vec3(0.0f, 0.0f, -2.0f)};
+    glm::vec3(2.0f, 0.5f, -2.0f),
+    glm::vec3(-2.0f, 0.5f, -2.0f),
+    glm::vec3(2.0f, 0.5f, 2.0f),
+    glm::vec3(-2.0f, 0.5f, 2.0f),
+    glm::vec3(0.0f, 0.5f, 2.0f),
+    glm::vec3(0.0f, 0.5f, -2.0f)};
 
 // Global variables for viewing
 glm::mat4 viewMatrix;
