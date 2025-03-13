@@ -358,6 +358,10 @@ void cursorPosCallback(GLFWwindow *window, double xpos, double ypos)
 {
     if (isDragging && selectedCube != -1)
     {
+        // Check if Shift key is pressed
+        bool shiftPressed = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+                            glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
+
         // Calculate world position at the current mouse cursor on the drag plane
         glm::vec4 viewport = glm::vec4(0, 0, windowWidth, windowHeight);
 
@@ -376,15 +380,28 @@ void cursorPosCallback(GLFWwindow *window, double xpos, double ypos)
         glm::vec3 rayOrigin = nearPoint;
         glm::vec3 rayDir = glm::normalize(farPoint - nearPoint);
 
-        // Calculate t where the ray intersects the Y plane
-        float t = (dragPlaneY - rayOrigin.y) / rayDir.y;
+        if (shiftPressed)
+        {
+            // Vertical movement: Move along y-axis based on mouse y delta
+            float mouseDeltaY = (ypos - lastMousePos.y) * -0.01f; // Negate for intuitive up/down
+            cubePositions[selectedCube].y += mouseDeltaY;
 
-        // Calculate the intersection point
-        glm::vec3 intersectionPoint = rayOrigin + rayDir * t;
+            // Update dragPlaneY to follow the cube's Y position
+            dragPlaneY = cubePositions[selectedCube].y;
+        }
+        else
+        {
+            // Horizontal movement (original behavior)
+            // Calculate t where the ray intersects the Y plane
+            float t = (dragPlaneY - rayOrigin.y) / rayDir.y;
 
-        // Update cube position, but maintain its Y coordinate
-        cubePositions[selectedCube].x = intersectionPoint.x;
-        cubePositions[selectedCube].z = intersectionPoint.z;
+            // Calculate the intersection point
+            glm::vec3 intersectionPoint = rayOrigin + rayDir * t;
+
+            // Update cube position, but maintain its Y coordinate
+            cubePositions[selectedCube].x = intersectionPoint.x;
+            cubePositions[selectedCube].z = intersectionPoint.z;
+        }
 
         // Update last mouse position
         lastMousePos = glm::vec2(xpos, ypos);
