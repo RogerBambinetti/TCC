@@ -1,5 +1,9 @@
-## TCC
+# TCC
 
-# VSCode
+## Dependencies
 
-1. To build use `ctrl + shit + b`
+- g++ compiler
+
+## Installing and setup
+
+1. To run the build task use `ctrl + shit + b`
