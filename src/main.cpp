@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <string>
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <glad/glad.h>
@@ -37,6 +38,28 @@ void main()
 }
 )";
 
+// Simple GUI Vertex Shader
+const char *guiVertexShaderSource = R"(
+#version 330 core
+layout(location = 0) in vec2 aPos;
+uniform mat4 projection;
+void main()
+{
+    gl_Position = projection * vec4(aPos.x, aPos.y, 0.0, 1.0);
+}
+)";
+
+// Simple GUI Fragment Shader
+const char *guiFragmentShaderSource = R"(
+#version 330 core
+out vec4 FragColor;
+uniform vec3 color;
+void main()
+{
+    FragColor = vec4(color, 1.0);
+}
+)";
+
 // Cube positions
 glm::vec3 cubePositions[6] = {
     glm::vec3(2.0f, 0.5f, -2.0f),
@@ -57,6 +80,18 @@ bool isDragging = false;
 int selectedCube = -1;
 glm::vec2 lastMousePos;
 float dragPlaneY = 0.0f; // Y position of the drag plane
+
+// Button structure
+struct Button
+{
+    float x, y, width, height;
+    std::string label;
+    bool isHovered;
+    bool isPressed;
+};
+
+// GUI buttons
+Button generateButton = {20.0f, 20.0f, 140.0f, 40.0f, "Generate Layout", false, false};
 
 // Function to compile shaders and link them into a program
 GLuint compileShaders(const char *vertexSource, const char *fragmentSource)
@@ -293,15 +328,106 @@ bool rayCubeIntersection(const glm::vec3 &rayOrigin, const glm::vec3 &rayDir, co
     return true;
 }
 
+// Button callback functions
+void onGenerateLayoutClick()
+{
+    // Empty function - will be implemented later
+    std::cout << "Generate Layout button clicked!" << std::endl;
+}
+
+// Function to check if point is inside button
+bool isPointInButton(float x, float y, const Button &button)
+{
+    return (x >= button.x && x <= button.x + button.width &&
+            y >= button.y && y <= button.y + button.height);
+}
+
+// Function to render a simple button using modern OpenGL
+void renderButton(GLuint guiShader, GLuint buttonVAO, GLuint buttonVBO, const Button &button)
+{
+    glUseProgram(guiShader);
+
+    // Create orthographic projection matrix for 2D GUI
+    glm::mat4 projection = glm::ortho(0.0f, (float)windowWidth, (float)windowHeight, 0.0f, -1.0f, 1.0f);
+    glUniformMatrix4fv(glGetUniformLocation(guiShader, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+    // Set color based on button state and button type
+    glm::vec3 color;
+
+    // Different base colors for different buttons
+    glm::vec3 baseColor;
+    if (button.label == "Generate Layout")
+    {
+        baseColor = glm::vec3(0.3f, 0.7f, 0.3f); // Green for Generate Layout
+    }
+    else if (button.label == "Cancel")
+    {
+        baseColor = glm::vec3(0.7f, 0.3f, 0.3f); // Red for Cancel
+    }
+    else
+    {
+        baseColor = glm::vec3(0.5f, 0.5f, 0.5f); // Default gray
+    }
+
+    // Modify color based on button state
+    if (button.isPressed)
+    {
+        color = baseColor * 0.6f; // Darker when pressed
+    }
+    else if (button.isHovered)
+    {
+        color = baseColor * 1.2f;                 // Brighter when hovered
+        color = glm::min(color, glm::vec3(1.0f)); // Clamp to prevent overflow
+    }
+    else
+    {
+        color = baseColor; // Default color
+    }
+
+    glUniform3fv(glGetUniformLocation(guiShader, "color"), 1, glm::value_ptr(color));
+
+    // Update button vertices
+    float vertices[] = {
+        button.x, button.y,                                // Top-left
+        button.x + button.width, button.y,                 // Top-right
+        button.x + button.width, button.y + button.height, // Bottom-right
+        button.x, button.y + button.height                 // Bottom-left
+    };
+
+    // Update VBO with new button position and size
+    glBindVertexArray(buttonVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, buttonVBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+
+    // Disable depth testing for GUI overlay
+    glDisable(GL_DEPTH_TEST);
+
+    // Draw button
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    // Re-enable depth testing
+    glEnable(GL_DEPTH_TEST);
+}
+
 // Mouse button callback function
 void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_LEFT)
     {
+        double xpos, ypos;
+        glfwGetCursorPos(window, &xpos, &ypos);
+
         if (action == GLFW_PRESS)
         {
-            double xpos, ypos;
-            glfwGetCursorPos(window, &xpos, &ypos);
+            // Check button clicks first (GUI has priority)
+            if (isPointInButton((float)xpos, (float)ypos, generateButton))
+            {
+                generateButton.isPressed = true;
+                onGenerateLayoutClick();
+                return;
+            }
+
+            // If no button was clicked, proceed with 3D object selection
             lastMousePos = glm::vec2(xpos, ypos);
 
             // Generate ray from camera position through mouse point
@@ -348,6 +474,9 @@ void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
         }
         else if (action == GLFW_RELEASE)
         {
+            // Reset button states
+            generateButton.isPressed = false;
+
             isDragging = false;
         }
     }
@@ -356,6 +485,9 @@ void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 // Mouse motion callback function
 void cursorPosCallback(GLFWwindow *window, double xpos, double ypos)
 {
+    // Update button hover states
+    generateButton.isHovered = isPointInButton((float)xpos, (float)ypos, generateButton);
+
     if (isDragging && selectedCube != -1)
     {
         // Check if Shift key is pressed
@@ -457,6 +589,7 @@ int main()
 
     // Compile shaders
     GLuint shaderProgram = compileShaders(vertexShaderSource, fragmentShaderSource);
+    GLuint guiShaderProgram = compileShaders(guiVertexShaderSource, guiFragmentShaderSource);
 
     // Generate sphere
     std::vector<float> sphereVertices;
@@ -524,6 +657,36 @@ int main()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
+    // Create VAO and VBO for GUI buttons
+    GLuint buttonVAO, buttonVBO, buttonEBO;
+    glGenVertexArrays(1, &buttonVAO);
+    glGenBuffers(1, &buttonVBO);
+    glGenBuffers(1, &buttonEBO);
+
+    glBindVertexArray(buttonVAO);
+
+    // Initial button vertices (will be updated per button)
+    float buttonVertices[] = {
+        0.0f, 0.0f, // Top-left
+        0.0f, 0.0f, // Top-right
+        0.0f, 0.0f, // Bottom-right
+        0.0f, 0.0f  // Bottom-left
+    };
+
+    unsigned int buttonIndices[] = {
+        0, 1, 2, // First triangle
+        2, 3, 0  // Second triangle
+    };
+
+    glBindBuffer(GL_ARRAY_BUFFER, buttonVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(buttonVertices), buttonVertices, GL_DYNAMIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buttonEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(buttonIndices), buttonIndices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+
     // Unbind VAO
     glBindVertexArray(0);
 
@@ -577,6 +740,9 @@ int main()
             glDrawElements(GL_TRIANGLES, cubeIndices.size(), GL_UNSIGNED_INT, 0);
         }
 
+        // Render GUI buttons
+        renderButton(guiShaderProgram, buttonVAO, buttonVBO, generateButton);
+
         // Swap front and back buffers
         glfwSwapBuffers(window);
 
@@ -597,7 +763,12 @@ int main()
     glDeleteBuffers(1, &gridVBO);
     glDeleteBuffers(1, &gridEBO);
 
+    glDeleteVertexArrays(1, &buttonVAO);
+    glDeleteBuffers(1, &buttonVBO);
+    glDeleteBuffers(1, &buttonEBO);
+
     glDeleteProgram(shaderProgram);
+    glDeleteProgram(guiShaderProgram);
 
     // Terminate GLFW
     glfwTerminate();
