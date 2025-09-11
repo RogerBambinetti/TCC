@@ -1,0 +1,1256 @@
+2013-10-23: RM0 Initial revision
+--------------------------------
+
+2013-11-01: RM0
+_______________
+
+- added missing VS 2008 configuration
+   . defaultRenderCmdl.sln
+   . defaultRendererCmdl.vcproj
+  in modules/objectRenderer/defaultRenderer/defaultRendererCmdl/make
+
+________________________________________________________________________________
+
+
+2014-01-08: RM1
+_______________
+
+- Maintenance:
+  - compile scripts:
+     . stop with error if one module was not built successfully
+
+  - libisomediafile:
+     . switched to static library version for Windows
+     . absence of IOD is no longer an error, instead an information
+       message is shown
+
+  - Core Decoder:
+     . fixed core decoder memory leaks
+     . fixed bug if more than 24 channels or objects are decoded
+     . fixed decoder crash for channel config index 0
+     . lean interface (3DAudioCoreDeclib/3DAudioCoreDecoder) replaces complex usacDec
+
+  - SAOC Coder:
+     . fixed flushing behavior
+     SAOC 3D Channel Based path:
+     . fixed bypass of LFE channels
+     . fixed mapping of channels to output buffers for qmf interface
+     . fixed stability issues for Singular Value Decomposition algorithm
+     . fixed combined mode:
+       -- replaced "totalNumObjects" with "nSaocChannels"
+       -- replaced "totalNumObjects" with "nSaocObjects"
+       -- replaced "pinvDmxCovMat_ch" with "pinvDmxCovMat_obj"
+     . fixed matrix multiplication for decorrelation methods "1" and "2"
+     . fixed definition of the unmixing matrix (G)
+     . fixed "Premixing mode, replace "gain" with "gain_PreMix"
+     . fixed identity rendering matrix for channel content
+     . removed OAM Rendering matrix interpolation if no objects are present
+     . deleted unused code for interpolation
+
+  - 3D Audio Decoder Framework:
+     . uses lean core decoder 3DAudioCoreDecoder
+     . makes use of new SAOC syntax as in m31440
+     . stops with an error if one of the binaries cannot be found
+
+  - 3D Audio Encoder Framework:
+     . stops with an error if one of the binaries cannot be found
+
+  - Default Renderer Module:
+     . renamed sln-File from defaultRenderCmdl.sln to defaultRendererCmdl.sln
+
+- Bug fixes:
+  - Integration of bugfixes as in m31440
+
+- New module:
+  - dmxMatrixCoder:
+     . for coding downmix matrices as in m31360
+
+- Module updates:
+  - ascParser:
+     . supports outputting of embedded downmix matrix into file
+     . prints out length of SAOC header (transmitted in extension config)
+     . removed unused saocChannels/saocObjects printout
+
+  - coreDecoder:
+     . supports Immediate Play-out (IPF) as in m31360
+     . support for new SAOC bitstream syntax
+
+  - coreEncoder:
+     . support for new SAOC bitstream syntax
+
+________________________________________________________________________________
+
+
+
+2014-02-07: RM1(+)
+__________________
+
+- Maintenance:
+  - 3D Audio Decoder Framework:
+     . stops with an error if output file exists
+
+  - 3D Audio Encoder Framework:
+     . stops with an error if output file exists
+     . writes encoded oam files in working directory
+     . added commandline switch -br for setting the encoding bitrate
+       (default: 512 kbps)
+
+  - 3D Audio Decoder Framework:
+     . uses new ascParser interface
+
+- Module updates:
+  - ascParser:
+     . interface cleanup
+     . supports new downmix matrix coding syntax as in m32180
+     . introduced config extension enum ID_CONFIG_EXT_LOUDNESS_INFO as in m32181
+     . reads new syntax FrameworkConfig3d() and Signals3d() as in m32182
+
+  - format converter:
+     . change of filterbank from low delay QMF to QMF as in m32187
+     . change of format converter implementation to low-complexity variant as in m32185
+
+  - coreEncoder:
+     . writes new syntax FrameworkConfig3d() and Signals3d() as in m32182
+
+  - coreDecoder:
+     . reads new syntax FrameworkConfig3d() and Signals3d() as in m32182
+
+- Bug fixes:
+     . Integration of bugfixes as in m31830
+
+________________________________________________________________________________
+
+
+
+2014-03-26: RM2 Merged CO - HOA Reference Software
+__________________________________________________
+
+- Maintenance:
+  - 3D Audio Decoder Framework:
+     . restructured, different decoder paths are now in separate files for better overview
+
+  - 3D Audio Encoder Framework:
+     . updated command line switches for encoding 22.2 channels, discrete objects, SAOC objects or HOA
+
+  - saocDecoder:
+     . removed unused variables and compiler warnings
+     . added error message return for function saoc_DecoderOpen() in saocdeclib
+
+- New modules:
+  - binauralParametrization:
+     . frequency domain binaural parametrization added
+     . including support for handling CICP setups, CICP loudspeakers and explicit geometry informations as in m32182
+
+  - binauralRenderer:
+     . frequency domain binaural renderer module added
+     . including support for handling CICP setups, CICP loudspeakers and explicit geometry informations as in m32182
+
+  - gVBAPRenderer:
+     . generalized VBAP renderer as proposed in m32186
+
+  - drcCoder:
+     . DRC coding module as described in N14261
+
+  - hoaCoder:
+     . HOA encoding and decoding modules, adapted for 3D Audio Encoder/3D Audio Decoder framework
+       including modifications as described in
+        m33196: 'HOA decoder - changes and proposed modifications'
+        - Adaptation of the HOA bitstream for the 3D Audio Encoder/Decoder framework (with USAC core coder)
+        - Renormalization to enable switching between predominant sound and vector coding
+        - New vector coding modes
+        - Reduction of HOA decoding delay
+        - Bitstream Syntax Clean-up and Extensibility
+
+- Removed modules:
+  - defaultRenderer:
+     . replaced by gVBAPRenderer
+
+- New tools:
+  - cicp2geometry:
+     . tool for reading/converting/writing loudspeaker geometry information
+
+  - AFspCppWrap:
+     . C++ wrapper for C++ interface, allows handling of AFsp raw pointer as shared pointer
+
+- Removed tools:
+  - channelPatchbay:
+     . replaced by cicp2geometry
+
+  - qmfIO
+     . outdated and not used by any module
+
+- Module updates:
+  - 3D Audio Decoder Framework:
+     . support for decoding HOA elements and HOA payloads as in m32244
+     . support for CICP setups, CICP loudspeakers and explicit geometry informations as in m32182
+     . support for referenceLayout as in m32182
+
+  - 3D Audio Encoder Framework:
+     . support for encoding HOA elements and HOA payloads as in m32244
+
+  - ascParser:
+     . support for parsing HOA elements as in m32244
+     . support for CICP setups, CICP loudspeakers and explicit geometry informations as in m32182
+     . support for referenceLayout and optional audioChannelLayout as in m32182
+
+  - coreEncoder:
+     . support for encoding HOA elements and HOA payloads as in m32244
+     . support for updated syntax regarding referenceLayout, audioChannelLayout, flexible element mapping and
+       geometry informations as in m32182
+
+  - coreDecoder:
+     . support for decoding HOA elements and HOA payloads as in m32244
+     . support for CICP setups, CICP loudspeakers and explicit geometry informations as in m32182
+     . support for referenceLayout and optional audioChannelLayout as in m32182
+     . support for flexible element mapping as in m32182
+
+  - dmxMatrixEncoder:
+     . support for handling CICP setups, CICP loudspeakers and explicit geometry informations as in m32182
+     . now using cicp2geometry library instead of the internal speaker layout definitions, which were removed
+     . removed the old non-CICP compact template matrices and re-added some of them as new CICP templates
+     . optimize rawCodingCompactMatrix value for small matrices and add presorting of peak filters of each EQ
+     . remove usage of a default compact template, by adding explicit compact templates instead
+
+  - dmxMatrixDecoder:
+     . support for handling CICP setups, CICP loudspeakers and explicit geometry informations as in m32182
+     . now using cicp2geometry library instead of the internal speaker layout definitions, which were removed
+     . removed the non-CICP old compact templates matrices and re-added some of them as new CICP templates
+     . remove usage of a default compact template, by adding explicit compact templates instead
+
+  - formatConverter:
+     . support for handling CICP setups, CICP loudspeakers and explicit geometry informations as in m32182
+     . matching of loudspeaker positions (az,el) to format converter channel labels
+     . fallback to VBAP downmix gain generation including gain post-processing
+
+ - saocEncoder:
+     . interface for handling CICP setups, CICP loudspeakers and explicit geometry informations as in m32182
+
+  - saocDecoder:
+     . support for handling CICP setups, CICP loudspeakers and explicit geometry informations as in m32182
+     . support for receiving the rendering information from the generalized VBAP renderer
+     . fixed switching conditions for defined rendering matrices in saoc_get_RenMat_ChannelPath()
+     . added min value and function maxWithSign for better numerical stability.
+
+- Tool updates:
+  - separator:
+     . support for copying a number of channels (starting from an offset) of an input to a multichannel output wave file.
+
+  - wavM2N:
+     . now using cicp2geometry instead of channelPatchbay
+
+- Bug fixes:
+     . Spatial HOA coder: changed to N3D normalized Spherical Harmonics as described in m33196
+
+________________________________________________________________________________
+
+
+2014-07-02: RM3
+_______________
+
+- Maintenance:
+  - saocDecoder:
+     . removed unused variables and warnings
+     . corrected breaking condition for matrix rank computation in function "LimitedCovarianceAdjustment" (saoc_decode.c)
+     . corrected decoder flushing for frames sizes smaller than the decoder delay
+
+- Module updates:
+
+  - ascParser:
+     . support for parsing active downmix signaling as in m33228
+     . support for parsing proposed receiverDelayCompensation bit as agreed at the AhG Meeting in Paris
+     . support for updated LoudnessInfoSet() syntax as in m33151
+     . support for updated DownmixMatrixSet() syntax as in m33151
+     . support for parsing asi metadata as agreed at the 108th MPEG meeting
+     . support for parsing MHAS bitstreams as in m33190
+
+  - coreEncoder:
+     . support for writing element length present bit as in m33198
+     . support for writing proposed receiverDelayCompensation bit as agreed at the AhG Meeting in Paris
+     . support for writing MHAS bitstreams as in m33190
+     . support for writing MHA bitstreams as in m33188
+
+  - coreDecoder:
+     . support for parsing element lengths as in m33198
+     . support for parsing proposed receiverDelayCompensation bit as agreed at the AhG Meeting in Paris
+     . support for skipping elements as in m33198
+     . support for updated mpegh3daConfig() and Signals3d() syntax as in m33178
+     . support for 0-slot QMF crossfade for IPF as in m33128
+     . support for parsing DRC data as in m33151
+     . support for decoding MHAS bitstreams as in m33190
+     . support for decoding MHA bitstreams as in m33188
+
+  - 3D Audio Decoder Framework:
+     . support for handling active/passive downmix matrix flag as in m33228
+     . support for FD-Domain binaural renderer
+     . support for TD-Domain binaural renderer
+     . support for applying DRC data as in m33151
+
+  - drcDecoder:
+     . added call of DRC modules to the 3D Audio Decoder Framework
+     . this includes also loudness normalization and peak limiter
+
+  - formatConverter:
+     . support for active/passive downmix matrix flag input as in m33228
+     . integrated table updates as in m33198
+
+  - gVBAPRenderer:
+     . updated QuickHull triangulation to remove predefined tables for loudspeaker setups
+       as agreed at the 108th MPEG meeting
+     . integrated imaginary speaker updates as in m33205
+
+  - saocEncoder:
+     . removed writing of outdated reserved bits as agreed at the 108th MPEG meeting
+
+  - saocDecoder:
+     . removed reading of outdated reserved bits as agreed at the 108th MPEG meeting
+     . integrated generic rendering support as in m33192
+     . added DRC interface to SAOC 3D decoder as described in ISO-IEC_23008-3
+
+  - hoaCoder:
+    . Removed Renderer ID from the HOAFrame as in m33196
+    . Added binaural time-domain parameterization for H2B rendering into the hoaReferenceDecoder executable as in m33200 and m33202.
+    . Spatial prediction bitstream data is only written if the HOAFrame includes directional transport channels as in m33620
+    . Removed redundant information from dynamic gain adaptation bitstream data in independency frames as in m34240
+    . Adapted size in bit for writing the absolute gain correction exponent in independency frames as in m34240
+    . Added 2 bits for signaling the HOA bit stream version into the HOAConfig payload as in m34240
+
+
+- Tools updates:
+
+  - libisomedia
+     . support for 'mhaC' and 'brtb' boxes in MHA bitstreams as in m33188
+
+- Bug fixes:
+     . Core Coder:        Integration of bugfixes as in m33198
+     . Binaural Renderer: Integration of bugfixes as in m33141
+     . hoaCoder:          Corrections for vector-based transport channel bitstream data as in m33196
+
+________________________________________________________________________________
+
+
+2014-01-16: RM4
+_______________
+
+- Maintenance
+
+  - 3D Audio Decoder Framework
+    . added some more error handling
+
+  - ascParser
+    . renamed recieverDelayCompensation to receiverDelayCompensation
+
+  - coreDecoder
+    . use sampleDescriptionType to distinguish between mp4a and mha
+    . unified reset of stereo prediction history for LPD-mode and common window
+
+  - formatConverter
+    . add FD flushing in case of qmf in/out
+    . Removed warnings
+
+  - saocCoder
+    . move singular values inversion outside of the loops over matrix dimensions in saoc_decode.c
+
+  - binaural
+    . renaming due to compatibility issues with different modules
+
+  - binauralRenderer_FD
+    . performance update, no change of output
+
+  - binauralInterface_TD
+    . added support for binaural bitstream interface as agreed on the 109th meeting
+
+  - binauralRenderer_TD
+    . added support for binaural bitstream interface as agreed on the 109th meeting
+
+   - hoaCoder
+    . adapted HOA encoder and decoder to new delay handling
+    . added commandline parameter for direct access of decoded HOA signals from the HOA
+      Decoder for direct binaural rendering from HOA
+    . computation of the coefficients of the spherical harmonics instead of using tables
+    . removed binaural processing from HOA Decoder
+
+- Module updates
+
+  - 3D Audio Decoder Framework
+    . support for receiverDelayCompensation as agreed at the AhG Meeting in Paris
+    . support for active downmix setting signaling as in m33228
+    . support for filterbank placement rule set and delay handling as in m34271
+      .. struct "decoderProperties"        : contains the decoder configuration
+      .. struct "domainSwitchingDecisions" : contains information about placement of all required analysis- and synthesis-steps
+      .. struct "moduleProcessingDomains"  : contains information about all active modules and in which domain they are operating
+    . support for downmix ID matching and application as in m34249
+    . new cmdl switch "-delayAlignMpegTestpoints"
+      .. since Edit List handling of the core decoder is disabled, the delay compensation and file length reconstruction happens in the framework
+      .. this is an optional feature and only for the ease of testing and comparing
+    . support for delivering the base channel count to the DRC selection process
+
+  - ascParser
+    . activated SUPPORT_MAE_GROUP_PRESET as in m33602
+    . added multiLanguage support as in N14746
+    . support for extensions to the MHAS syntax as in m33601
+    . support for local screen information interface (ObjectMetadataConfig) as in m34296
+    . support for dynamic priority as in m34254
+    . support for profile level indication
+    . include needed functionality for the metadataPreprocessor module and the dynamicObjectPriorityGenerator module
+
+  - coreDecoder
+    . support for extensions to the MHAS syntax as in m33601
+    . new cmdl switches
+      .. "-qmfauto"          -> Decoder outputs qmf or wave depending on the content (no file extension needed for <output>)
+      .. "-writeElstToFile"  -> Write Edit List info to file (delay and file length info of the decoded waveform)
+
+  - formatConverter
+    . support for active downmix setting signaling as in m33228
+
+  - gVBAPRenderer
+    . add frequency domain rendering to gVBAPRenderer (needed for filterbank placement rule set as in m34271)
+    . support for imaginary loudspeaker as in m33205
+    . support for object spread as in m34286
+    . include needed functionality for the dynamicObjectPriorityGenerator module as in m34254
+
+  - saocCoder
+    . support for filterbank placement rule set and edit list disabling
+      .. dummy frames for delay signal in the beginning
+    . include needed functionality for the dynamicObjectPriorityGenerator module
+
+  - oamCoder
+    . support for dynamic priority as in m34254
+    . new cmdl switches (oamEncoder)
+      .. "-oamVersion"  : for oam Decoder (oamVersion 2 contains spread data)
+      .. "-dummyFrames" : keep first OAM value for dummy frame period of n dummy frames
+      .. "-oamBs": blocksize (in samples) of audio data for which one OAM sample is valid
+      .. rename "-bs" to "-coreBs": blocksize (in samples) of core coder
+
+  - binaural
+    . moved folder structure from
+       ./binauralRenderer and ./binauralParametrization to
+       ./binaural/renderer/renderer_FD/ and ./binaural/parametrization/parametrization_FD/
+       ./binauralRenderer_TD and ./binauralParametrization_TD to
+       ./binaural/renderer/renderer_TD/ and ./binaural/parametrization/parametrization_TD/
+    . added library and cmdline tool to read/write binaural bitstreams in ./binaural/interface
+      as agreed on the 109th meeting (according to w14930)
+
+  - hoaCoder
+      . VQ V-vector coding method as in m34105
+      . support for signaled rendering matrices in reference decoder as in m33620
+      . added time-domain DRC-1 for HOA into the HOA Decoder as in m33151
+      . adjustment of gain control module as in m34239 and m34240
+
+- New modules
+
+  - domainSwitcher
+     . tool for changing the domain representation (switch from TD to FD and vice versa)
+
+  - hoaMatrixCoder
+    . module to encode and decode a signaled HOA rendering matrix as in m33620
+
+  - decoderInterfaces
+    - elementInteractionInterface as in m34291
+      . reading of (framewise) interaction from a txt file
+      . writing (framewise) user interaction "bitstream",
+      . reading of (framewise) user interaction from "bitstream",
+      . writing of data to a public struct
+    - localSetupInformationInterface as in m34293
+      . reading of info from file + commandline switches
+      . writing of "bitstream" for the local setup for loudspeaker rendering and binaural rendering
+       (using the binaural interface as agreed on the 109th meeting)
+      . reading of "bitstream" for the local setup for loudspeaker rendering and binaural rendering
+       (using the binaural interface as agreed on the 109th meeting)
+      . writing of data to a public struct
+
+  - metadataPreprocessor
+    . tool for processing of element interaction data (user interaction with object-based content)
+
+  - dynamicObjectPriorityGenerator
+    . tool for generating dynamic object priority values (integrated according to according to w14930)
+
+- Tools updates
+
+  - mixer
+    . support for qmf-file handling / FD input
+
+  - qmflib
+    . add 64bit build target to vcproj
+
+  - separator
+    . support for qmf-file handling / FD input
+
+- New tools
+
+  - wavCutter
+     . tool for manipulating the file length (remove or add delay, cut the file to desired file length) of wave- and qmf-files
+
+- Bug fixes
+
+  - ascParser
+    . Fix OAM frameLength signaling as in m34264
+    . Move MHAS_PACTYP_UNDEF out of "reserved outside of ISO scope" range and set it to 518
+
+  - coreDecoder
+    . Fix for the IGF noise signal
+
+  - 3D Audio Decoder Framework:
+    . Fix mixer path for objects
+
+  - libisomedia
+    . bugfix for MHA config handling
+    . allocation clean up
+
+  - oamCoder:
+    . Fixed frame 0 handling. A wrong iframe_period was written and read by the OAM coder for the first frame. Now it works as described in the standard text
+    . ldV1 decoder: empty oam payloads are not allowed
+
+  - binauralRenderer_FD
+    . fix writing of QMF files (write 64 bands instead of 48)
+    . editorial fix regarding the composition of delay samples
+    . introduce #define for reproduction of matlab submission
+      .. new delay handling does not include the initial BRIR delay, so the delay is no longer dependent on the BRIR
+    . fix for smaller framesizes (1024 and 2048 samples)
+
+  - binaural renderer TD
+    . fix to allow for handling HOA content of order 5 and 6
+
+  - saocCoder
+    . SAOC: Integration of bugfixes as in m34264
+
+________________________________________________________________________________
+
+
+2015-07-24: RM5
+_______________
+
+- Maintenance
+
+  - formatConverter
+    . add denormal handling
+
+  - saocDecoder
+    . remove useless computation of lower triangular part of symmetric matrix (DED*)
+    . store the result of matrix multiplication ED* which is used again in computations, instead of recomputing it
+    . remove defines used for bugfixes up to RM4
+
+- Module updates
+
+  - ascParser
+    . downmix config references signal group ids instead of mae group ids
+    . update according to m35883
+    . updated syntax of mae_AudioSceneInfo parsing according to "Proposed update of MPEG-H 3D Audio Metadata Audio Elements, m35883"
+    . support for decoding of mhas files without "Magic Prefix"
+    . fix order of coreQmfDelayCompensation and receiverDelayCompensation bits to be compliant with the standard text
+
+  - binaural
+    . FD binaural: change the two parameters kConv and kMax as in m36513
+    . TD binaural: replace the uhd_fft used for TD binaural by the standard MPEG_H tool "fftlib" as in m36537
+
+  - cicp2geometry
+    . add Loudspeaker Layout Index (or ChannelConfiguration) 19 & 20 as in m35899
+    . update Loudspeaker Layout Index (or ChannelConfiguration) 13 (regarding the
+      "screen relative" loudspeakers) as in m35899
+
+  - coreEncoder
+    . add updates to Dynamic Object Priority handling as in m35851
+    . fix order of coreQmfDelayCompensation and receiverDelayCompensation bits to be compliant with the standard text
+
+  - coreDeoder
+    . support for decoding of mhas files without "Magic Prefix"
+    . update syntax of igfIndependentTiling as in m35899
+    . apply corrections to the Enhanced Noise Filling as in m35809
+    . use 8 bit profile-level-indication (instead of 8 bit profiles, 8 bit levels)
+      for mha-boxes in mp4 file format as in w15267
+    . fix order of coreQmfDelayCompensation and receiverDelayCompensation bits to be compliant with the standard text
+
+  - gVBAPRenderer
+    . activate sorting of vertex indices as described in the standard text
+    . fix spread related issues to be compliant with the standard text
+    . add support for gVBAP rendering with no OAM information for sample position 0
+
+  - hoaCoder/bitstream
+    . added RM5 HOA bitstream syntax regarding FrameLengthIndicator,
+      SingleLayer bit and SpatialInterpolationTime as in m35907
+    . corrections for HOA bitstream syntax according to m36568
+
+  - oamEncoder
+    . add updates to Dynamic Object Priority handling as in m35851
+    . remove cmdl switch "-addDynamicPriority" since this would only produce
+      compliant bit streams but without meaningful dynamic object priority data
+    . discard OAM information for sample position 0 to have aligned OAM data
+      at the decoder output as described in the standard text
+
+  - oamDecoder
+    . apply limiting thresholds as described in the standard text
+    . write OAM file without sample position 0 to be compliant with the standard text
+
+  - saocDecoder
+    . add rendering matrix interpolation over parameter sets according to m35897
+    . add group processing support according to m35897
+
+  - metadataPreprocessor
+    . update processing according to m35899 and m35883
+
+  - libisomediafile
+    . use 8 bit profile-level-indication (instead of 8 bit profiles, 8 bit levels)
+      for mha-boxes in mp4 file format as in w15267
+
+
+- Bug fixes
+
+  - coreDeoder
+    . fixed split-transform windowing if previous frame was in LPD mode
+    . fixed uninitialized IGF variable (might be triggered when common_window == 0)
+    . remove assert for same source bands in IGF joint stereo, source bands are allowed to be different in the standard text
+
+  - gVBAPRenderer
+    . fix bugs in the Quickhull algorithm to be compliant with the standard text
+
+  - saocDecoder
+    . remove "SAOC_EPSILON" from division operations where it is neither required nor specified in IS text
+
+  - hoaCoder/bitstream:
+    . corrections for HOA bitstream syntax
+
+  - libisomediafile
+    . fix Makefile for Darwin/osxs (MHA related source files were missing)
+
+________________________________________________________________________________
+
+
+2016-02-17: RM6
+_______________
+
+- Module updates
+
+  -  3DAudioDecoder
+    . add overall delay alignment and constant decoder delay as in ISO/IEC 23008-3:2015/PDAM 3
+    . align extension payloads to MDCT output as in ISO/IEC 23008-3:2015/PDAM 3
+    . add Internal Channel CE as in ISO/IEC 23008-3:2015/PDAM 3
+    . add support for constant system sampling rate as in m37214
+
+  - ascParser
+    . add support for parsing of the hasUniformSpread-bit in objectMetadataConfig as in ISO/IEC 23008-3:2015/PDAM 3
+    . add further support for parsing metadata-related extensions in mae_data as in ISO/IEC 23008-3:2015/PDAM 3
+    . update for SAOC signaling according to m36522
+
+  - coreDecoder
+    . add Discrete Multi-Channel Coding Tool as in ISO/IEC 23008-3:2015/PDAM 3
+    . add support for core decoder delay lines for compensation of SBR, MPS212 in case of receiverDelayCompensation
+      as in ISO/IEC 23008-3:2015/PDAM 3
+    . add Optimizations and Improvements for Low Bitrate Coding as in ISO/IEC 23008-3:2015/PDAM 3
+    . add Tonal Component Coding Tool as in ISO/IEC 23008-3:2015/PDAM 3
+    . add support for contribution decoder mode as in ISO/IEC 23008-3:2015/PDAM 3
+    . activate 65_ANGLE_FIX from MPEG 113th meeting
+    . add Internal Channel CE as in ISO/IEC 23008-3:2015/PDAM 3
+    . add support for "Upmix without decorrelation in case format converter step is included" as in m37885
+
+  - coreEncoder
+    . add config bits for fullbandLpd and lpdStereoIndex as in ISO/IEC 23008-3:2015/PDAM 3
+    . put extension payloads in front of corresponding signal group as in ISO/IEC 23008-3:2015/PDAM 3
+    . update for SAOC signaling according to m36522
+
+  - dynamicObjectPriorityGenerator
+    . add support for spread component update as in ISO/IEC 23008-3:2015/PDAM 3
+    . update OAM file version to v4 (with hasUniformSpread flag in header)
+
+  - formatConverter
+    . add Low complexity downmix as in m37203
+    . add Internal Channel CE as in ISO/IEC 23008-3:2015/PDAM 3
+
+  - hoaCoder/bitstream
+    . integrated the Phase 2 HOA encoder and decoder tools Parametric Ambience Replication and Directional Sub-band Prediction
+    . merged Phase 1 and Phase 2 HOA bit stream syntax according to PDAM 3
+    . implemented corrections for the Parametric Ambience Replication according to input document m37313
+    . Corrections as in m37263
+    . Screen-related adaptation in HOA Renderer as in m37264
+
+  - hoaMatrixCoder
+    . Corrections as in m37263
+
+  - localSetupInformationInterface
+    . incorporate useTrackingMode as in ISO/IEC 23008-3:2015/PDAM 3 into writing and reading to LoudspeakerRendering()
+
+  - metadataPreprocessor
+    . add support for updates as in ISO/IEC 23008-3:2015/PDAM 3
+
+  - oamCoder
+    . add support for spread component update as in ISO/IEC 23008-3:2015/PDAM 3
+    . update OAM file version to v4 (with hasUniformSpread flag in header)
+    . add support for oamFramelength < coreCoderFramelength as in ISO/IEC 23008-3:2015/PDAM 3
+
+  - object metadata preprocessor
+    . incorporate all changes with respect to object-based processing (m36586)
+      .. #define RM6_MULTIPLE_REF_SCREENS
+      .. #define RM6_OFF_CENTERED_REF_SCREENS
+      .. #define RM6_CONDITIONED_CLOSEST_SPEAKER
+      .. #define RM6_DIVERGENCE
+      .. #define RM6_DOWNMIXID_PRESET_EXTENSIONS
+      .. #define RM6_SWITCHGROUP_CONDITIONS
+    . incorporate further processing as in ISO/IEC 23008-3:2015/PDAM 3
+      .. #define SCREEN_REMAP_FIX
+      .. #define RENDER_NON_UNIFORM_SPREAD
+      .. #define SCENE_DISPLACEMENT_PROCESSING
+      .. #define USE_EXCLUDED_SECTORS
+      .. #define DIFFUSENESS_RENDERING
+
+  - saocCoder
+    . update for SAOC signaling according to m36522
+    . update OAM file version to v4 (with hasUniformSpread flag in header)
+
+  - mps3DAExtension
+    . added new module mps3DAExtension for the 3DA MPS Extension
+
+- Maintenance
+
+  - ascParser
+    . fix and rework objectMetadataConfig parsing
+
+  - binaural interface
+    . harmonize interface with text of ISO/IEC 23008-3:2015/PDAM 3
+
+  - coreEncoder
+    . remove m4a writing (mp4 is only valid with mha box)
+
+  - coreDecoder
+    . harmonize calculation of previous downmix for stereoFilling and complex/real prediction
+
+  - hoaMatrixCoder
+    . update copyright headers as in m35945
+    . change in commandline interface and internal cleanup
+
+  - oamCoder
+    . move oam_write to oam_common to make it easily usable in other projects
+
+  - hoaCoder
+    . Replacement of FFT library
+
+  - MPS 3DA Extension
+    . add scripts for Phase 2: 48, 64, 96, 128 kbps
+
+- Bug fixes
+
+  - coreDecoder
+    . fix buffer management bug in SBR decoder
+    . fix complex prediction bug in combination with short blocks
+    . integrates USAC refSoft fixes
+      .. USAC_REFSOFT_COR1_NOFIX_02
+      .. USAC_REFSOFT_COR1_NOFIX_04
+      .. USAC_REFSOFT_COR1_NOFIX_05
+      .. USAC_REFSOFT_COR1_NOFIX_06
+      .. USAC_REFSOFT_COR1_NOFIX_07
+      .. USAC_REFSOFT_COR1_NOFIX_08
+      .. USAC_REFSOFT_COR1_NOFIX_09
+      .. USAC_REFSOFT_COR2_NOFIX_01
+      .. USAC_REFSOFT_COR2_NOFIX_02
+    . read preroll-ASC only if ASC length > 0
+
+  - coreEncoder
+    . fix several bugs for stereo file encoding
+
+  - hoaCoder/bitstream
+    . corrected end of file handling of the HOA Reference encoder
+    . disabled wrongly set RM0 define in HOA Renderer
+
+________________________________________________________________________________
+
+
+2016-07-01: RM7
+_______________
+
+- Module updates
+
+  - coreDecoder
+    . add signaling of IGF start and stop indices, as in m37897
+    . add signaling of Stereo Filling in MCT, as in m37897
+    . add signaling of Crossfade in IPF, as in m37897
+    . add High Resolution Envelope Processing (HREP), as in m37889
+
+  - coreEncoder
+    . add MCT Encoding functionality
+    . add MPEG-H complexity constraints sanity checks, as in m37883
+
+  - 3DAudioDecoder
+    . add MPEG-H complexity constraints sanity checks, as in m37883
+    . remove cfg-File dependency, for more detailed info please refer to the readme.txt file
+
+  - metadataPreprocessor
+    . update metadata syntax to RM7 metadata syntax as in m37892
+
+  - drcDecoder
+    . activate peak limiter per default, as in ISO/IEC 23008-3:2015/DAM 3
+
+  - ascParser
+    . update metadata syntax to RM7 metadata syntax as in m37892
+
+  - libisomediafile
+    . add mha2, mhm1 and mhm2 atoms
+    . merged with http://wg11.sc29.org/svn/repos/MPEG-04/Part12-ISO_Base_Media_File_Format/trunk
+
+  - formatConverter
+    . add missing rules and LFE handling in VBAP fallback as in m37885
+
+  - gVBAPRenderer
+    . ensure that spread is only applied for values > 0, as in ISO/IEC 23008-3:2015/DAM 3
+
+  - hoaCoder
+    . add implementation of "2D HOA Codebook", as in m37874
+    . add screen adaptive zoom for HOA
+
+  - oamCoder
+    . add object metadata encoding with low delay
+    . add limiting and scaling corrections, as in ISO/IEC 23008-3:2015/DAM 3
+
+- Maintenance
+
+  - ascParser
+    . add sanity check whether ProfileLevelIndication in mp4 and mpegh3daConfig are consistent
+
+  - coreDecoder
+    . add sanity checks in MCT
+    . disable application of edit list information by default
+    . clean-up IGF code base
+    . remove debugging code for element length
+
+  - cicp2geometry
+    . enable all CICP layouts defined in ISO/IEC 23001-8:2013/Amd.1:2015(E)
+
+  - separator
+    . add sanity check to avoid buffer overflows
+
+  - binaural
+    . fix a compiler specific inconsistency for TD binaural
+
+  - limiter
+    . Removed unused limiter-module (was replaced by modules/drcCoder/MPEG-D_DRC_Tool_refSoft/modules/peakLimiter)
+
+- Bug fixes
+
+  - 3DAudioDecoder
+    . fix delay calculations in case of Low Complexity Profile and no format conversion
+    . fix HOA decoding process (file ending of temporary file was missing in HOA path)
+    . fix delay numbers in case of resampling
+    . fix "previous" window shape for first frame (has to be set to "current" window shape)
+    . fix parsing of DownmixMatrix
+
+  - coreDecoder
+    . add corrections and clarifications on Tonal Component Coding, as in m37932
+    . add bug fix for coreDecoder decoding mhas files and edit list option enabled
+    . fix command line parsing for "-icFile" (segmentation fault on Mac OSX)
+    . fix INF processing in combination with medium whitening and TNS before IGF
+    . fix random noise wrapp around inside IGF
+    . properly sync CPE IGF data
+    . set correct sampling rate for 768 ccfl
+    . fix IC use case (only works for channel content)
+    . fix naming of extension payloads in case of multiple signal groups
+
+  - coreEncoder
+    . fix writing of profileLevelIndication in mp4 file (was set to 0x0 by default)
+    . write fill bits in extension payload
+
+  - binaural
+    . bugfix on the software for MPEG-H 3D, as in m37986
+
+  - qmflibCppWrap
+    . fix delay for Low Complexity Profile HOA decoding, as in ISO/IEC 23008-3:2015/DAM 3
+
+________________________________________________________________________________
+
+
+2016-10-07: RM8
+_______________
+
+- Maintenance
+
+  - 3DAudioDecoder / metadataPreprocessor
+    . integrate metadataPreprocessor into 3DAudioDecoder
+    . fix multiple warnings
+
+  - gVBAPRenderer
+    . fix typo
+
+  - binaural
+    . convert C99 comment to C89
+
+  - coreDecoder
+    . simplify swb_offset calculation in IGF
+    . add cmdl parameter for determining the .wav output bit depth
+    . fix multiple warnings
+
+- Bug fixes
+  - 3DAudioDecoder
+    . mixer adjusts delay if two input files differ in length
+    . correct HOA delay adjustment
+
+  - metadataPreprocessor
+    . fix for metadataPreprocessor with respect to the application of switch group logic, gain and position interaction and the processing of multiple signal groups
+
+  - ascParser
+    . fix reading of audioSceneInformation, signalGroupInformation, signalGroupConfig from the bitstream
+
+  - elementInteractionInterface
+    . fix generation of "bitstream" file for the element interaction interface for the basic interaction mode
+
+  - localSetupInformationInterface
+    . fix generation of "bitstream" file for the local setup information interface for stereo (or mono) setups
+
+  - oamCoder
+    . fix decoding of files with multiple object groups
+
+  - formatConverter
+    . fix application of transmitted EQs to highest STFT band
+    . fix frequency band mapping for application of transmitted EQs in STFT downmix
+
+  - coreDecoder
+    . fix multiple OAM file reading
+    . fix TD/FD random noise seed synchronization
+    . fix reset of the FDP on usacIndepFlags
+    . fix windows shape in transition frames between FD and TD
+    . fix TD resampler (buffer offset, filter init for FAC)
+    . fix TCX noise bandwidth if max_sfb equals 0
+    . fix stereoFilling gain limitation
+    . fix TNF stereo processing
+
+________________________________________________________________________________
+
+
+2017-02-24: RM8 (v02)
+_______________
+
+- Maintenance
+  - add x64 build support for Visual Studio 2008 and Visual Studio 2012
+  - use 32bit audio processing interface (32bit IEEE float .wav)
+  - simplify build process on Windows, Linux, Mac
+    . use one common script for Windows (VS2008/2012) and Linux/Mac
+    . update readme.txt
+  - solve multiple warnings, code clean-up
+  - fix Windows Release builds
+
+- Bug fixes
+  - 3DAudioDecoder
+    . fix LFE rendering for multiple signal groups
+    . fix channel group concatenation
+    . fix handling of loudness metadata
+
+  - metadataPreprocessor
+    . fix loudness compensation handling
+    . fix object output interface value range
+    . fix handling of misplaced loudspeaker positions
+
+  - ascParser
+    . fix dereferencing of speaker description
+    . fix groupPreset handling
+
+  - binaural
+    . fix intermediate filename in H2B path
+
+  - elementInteractionInterface
+    . fix preset skipping
+
+  - formatConverter
+    . fix bug in verbose info mode when dmx runs in STFT mode
+
+  - gVBAPRenderer
+    . fix spread rendering for spread angles > 90 degree
+
+  - DRC
+    . fix parameter transport
+
+  - coreDecoder
+    . fix IGF processing (initialization, whitening, inverse quantization)
+    . fix HREP processing (indexing, remove edit list handling)
+    . fix stereoLpd decoding (non-fullbandLpd modes)
+
+________________________________________________________________________________
+
+
+2017-04-14: RM9
+_______________
+
+- Maintenance
+  - Solving of compiler warnings
+  - Removal of dead/unused code
+  - Restructuring of smaller code pieces
+  - Improving readability of the source code
+  - Improving the error handling
+  - Using static runtime library for Visual Studio builds
+  - Fix x64 and release build on Windows platforms
+  - disable non-informative warnings
+
+- Bug fixes
+  - 3DAudioCoreDecoder
+    . fix ALFE processing in case fullbandLpd==1 and enhanceNoiseFilling==0
+    . fix stereoLpd prediction mode
+    . fix transition windowing for TCX <-> FD transitions
+    . fix previous window_shape if the first subframe of the first AU is TCX coded
+    . fix update of the first frame flag
+    . fix TCC processing if tccConfig is set to 0
+
+  - 3DAudioDecoder
+    . fix the adding of a .wav extension in the MDPP path
+    . fix the determination of the number of target channels
+    . fix default preset selection
+
+  - ascParser
+    . fix ASI in mhas packet reading
+    . fix mhas packet reading
+    . fix reading of mae_metaDataElementIDmaxAvail
+
+  - formatConverter
+    . fix command line parameters for passive downmix
+
+  - DRC
+    . fix effect fall-back strategy
+    . fix gain delay
+
+  - HOA
+    . add scene-displacement processing 
+
+________________________________________________________________________________
+
+
+2017-10-25: RM10
+________________
+
+- Maintenance
+  - Clean-up code, improve readability of code
+  - Extend the build process for Visual Studio
+  - Fix the build of the Immersive Format Converter
+  - Restructuring of smaller code pieces
+  - Align executable names between Windows and Unix builds
+  - Make .cfg-files optional for 3DAudioEncoder
+  - Enable the usage of multichannel .wav-files as input files for the 3DAudioEncoder
+  - Add Exif tags to decoded .wav files
+  - Add conformance point output (CPO) 1
+  - Add example .mhas streams for decoding
+  - Extend compile scripts for decoding example .mhas stream
+
+- Bug fixes
+  - 3DAudioCoreDecoder
+    . fix stereoLpd memory reset
+    . fix usage of LPC filter for FAC synthesis
+    . fix previous window shape for transitions from ACELP to TCX
+    . fix handling of extension elements stored in the AU in ID_EXT_ELE_AUDIOPREROLL
+    . fix handling of MHAS packets of type PACTYP_AUDIOTRUNCATION
+    . fix decoding of multiple signal groups
+    . fix FAC processing
+    . fix LPD memory transfer in CPE
+    . deactivate RM6_INTERNAL_CHANNEL by default to ensure stability
+
+  - 3DAudioDecoder
+    . fix handling of extension elements stored in the AU in ID_EXT_ELE_AUDIOPREROLL
+    . fix call to iarFormatConverter
+    . fix handling of MHAS packets of type PACTYP_AUDIOTRUNCATION
+    . fix handling of divergence and spread in LC profile
+    . deactivate RM6_INTERNAL_CHANNEL by default to ensure stability
+    . fix Virtual Loudspeaker Binaural (VLB) mode
+    . fix decoding of HOA Rendering Matrices
+
+  - iarFormatConverter
+    . fix parsing of rendering3DType
+
+  - 3DAudioCoreEncoder
+    . remove edit list
+    . fix writing of AudioPreRoll() extension elements in ID_EXT_ELE_AUDIOPREROLL
+    . fix writing of MHAS packets of type PACTYP_AUDIOTRUNCATION
+    . fix handling of encoder delay for LC profile
+
+________________________________________________________________________________
+
+
+2018-01-17: Edition 2.0
+_______________________
+
+- Maintenance
+  - set version number to 2.0
+  - Clean-up code, improve readability of code
+  - move internal Visual Studio solutions and project files
+  - add verbose mode to compile.bat and compile.sh
+  - restructure embedding of MPEG-4 Part 12 ISOBMFF
+
+- Bug fixes
+  - ascParser
+    . fix GCC compiler support for version > 4
+
+  - saocDecoder
+    . fix GCC compiler support for version > 4
+
+  - gVBAPRenderer
+    . fix spread processing
+    . fix calculation of startGains
+
+  - 3DAudioDecoder
+    . add sanity check of LC profile
+
+  - 3DAudioCoreEncoder
+    . remove edit list
+    . fix writing of AudioPreRoll() extension elements in ID_EXT_ELE_AUDIOPREROLL
+    . fix writing of MHAS packets of type PACTYP_AUDIOTRUNCATION
+    . fix handling of encoder delay for LC profile
+
+________________________________________________________________________________
+
+
+2018-07-11: Edition 2.1
+_______________________
+
+- Maintenance
+  - set version number to 2.1
+  - Clean-up code, improve readability of code
+  - redefine command line parameters and restructuring of command line parameter handling
+  - update help according to new command line parameters
+
+- Bug fixes
+  - 3DAudioCoreDecoder
+    . fixed initialization of the TNS processing range
+    . fixed unnecessary IGF processing in case igf_allZero==true
+
+________________________________________________________________________________
+
+
+2019-01-09: Edition 2.2
+_______________________
+
+- Maintenance
+  - remove deprectaded source code files of the coreCoder module
+
+- Bug fixes
+  - 3DAudioCoreEncoder
+    . fixed calculation of nTruncSamples in AudioTruncationInfo
+
+- Features
+  - add support of earcon metadata packing and unpacking
+  - add support of MHASPacketType PACTYP_LOUDNESS on decoder side
+
+- Integration of Positional Scene Displacement Interface (PSDI)
+  - Updated modules:
+    . sceneDisplacementInterfaceLib
+    . sceneDisplacementInterfaceExample
+      .. Implemenation of PSDI API functions
+      .. Update example to handle PSDI data
+      .. Refactoring, clean-up
+    . 3DAudioDecoder
+      .. Commandline switch '-sd2' to specify path to interface bitstream
+      .. Integration of PSDI
+    . metadataPreprocessor
+      .. Implementation of positional scene displacement processing
+      .. Integration of PSDI
+      .. Fix gcc warnings
+
+________________________________________________________________________________
+
+
+2019-03-20: Edition 2.3
+_______________________
+
+- Maintenance
+  - solve several compiler warnings such as
+    . Signed – unsigned mismatch, e.g. signed int <> unsigned int
+    .	mplicit double to float conversion, loss of precision, e.g. 2. <> 2.f
+    . Implicit long to int conversion, loss of precision, e.g. typecast long to int
+    . Wrong/missing const-ness of variables in function prototypes
+    . Unused variables
+    . Use of undefined variables
+  - reformat encoder command line help
+
+- Bug fixes
+  - earconEncoder
+    . fixed signaling of earconType: write type 5 as PCM data are transported
+  - 3DAudioCoreDecoder
+    . fixed decoding of streams with numPreRollFrames equals 0
+  - 3DAudioDecoder
+    . fixed decoding of contribution mode streams
+
+- Features
+  - integration of the earconEncoder into the 3DAudioEncoder framwork
+  - integration of the earconDecoder into the 3DAudioDecoder framwork
+  - add support of Production Metadata
+
+- Tools
+  - add SSNRCD audio conformance verification tool
+
+________________________________________________________________________________
+
+
+2020-06-24: Edition 3.0
+_______________________
+
+- Maintenance
+  - solve several compiler warnings such as
+    . Signed – unsigned mismatch, e.g. signed int <> unsigned int
+
+- Features
+  - integration of Baseline Profile support into the 3DAudioDecoder framwork
+  - checking of Baseline Profile constraints in the 3DAudioDecoder framwork and 3DAudioCoreDecoder module
+  - parsing and handling of CompatibleProfileLevelSet() config extension element
+
+
+________________________________________________________________________________
+
+
+2020-10-16: Edition 3.1
+_______________________
+
+- Maintenance
+  - added CMake support for software configuration and compilation
+
+- 3DAudioEncoder features
+  - Baseline Profile compatible bit stream encoding
+  - Writing of the CompatibleProfileLevelSet() config extension
+
+- Bug fixes
+  - hoaCoder
+    . fixed access violation resulting from an uninitialized handle
+  - earconCoder
+    . fixed earconDecoder fails when using mp4 files as input
+    . correct MHASPacketLabel values written by earconEncoder
+  - coreCoder
+    . fixed several causes for stack overflows in 3DAudioCoreDecoder
+    . fixed decoding of mhm-mp4 streams containing a MHAConfigurationBox box of the type mhaC
+
+
+________________________________________________________________________________
+
+
+2021-01-15: Edition 3.2
+_______________________
+
+- Features
+  - Support for mhaP box
+
+- Bug fixes
+  - Corrections to the Complex Prediction Tool
+  - Fix assembling of binary-call strings
+  - Correct restriction check for baseline profile
+
+
+________________________________________________________________________________
+
+
+2021-04-30: Edition 3.3
+_______________________
+
+- Maintenance
+  - correct handling of system() call return codes on Linux and Darwin systems
+  - fix CMake build on Darwin
+
+
+________________________________________________________________________________
+
+
+2022-10-27: Edition 3.4
+_______________________
+
+- Maintenance
+  - fix closest loudspeaker playout handling
+  - add graceful exit for mp4 files with more than one mp4 track
+  - fix MHASPacketLabel warning printouts
+
+
+2024-07-31: Edition 4.0
+_______________________
+
+- Maintenance
+  - add graceful exit for bitstreams with config changes
+  - fix "multiple definitions" linker error on gcc 10 and higher
+  - fix mpegh3daExtElement() parsing for usacExtElementUseDefaultLength
+  - establish compatibility to latest MPEG-D DRC reference software
+  - increase minimum required cmake version to 3.9.2
+  - check out dependencies via cmake (AFsp, MPEG-D DRC, ISOBMFF)
+  - increase stack size of mixerCmdl, hoaReferenceDecoder, formatConverterCmdl, saocDecoderCmdl
