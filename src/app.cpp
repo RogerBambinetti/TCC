@@ -6,6 +6,7 @@
 #include "input.h"
 #include <iostream>
 #include <cfloat>
+#include <string>
 
 Application::Application()
     : window(nullptr), windowWidth(800), windowHeight(600),
@@ -176,6 +177,7 @@ void Application::render()
 
     renderScene();
     renderGUI();
+    renderCubeLabels();
 }
 
 void Application::renderScene()
@@ -225,6 +227,45 @@ void Application::renderGUI()
     // Render GUI buttons
     GUI::renderButton(guiShaderProgram, textShaderProgram, GUI::getGenerateButton(), windowWidth, windowHeight);
     GUI::renderButton(guiShaderProgram, textShaderProgram, GUI::getConvertButton(), windowWidth, windowHeight);
+}
+
+void Application::renderCubeLabels()
+{
+    // Use the same view and projection matrices as the scene
+    glm::mat4 view = viewMatrix;
+    glm::mat4 projection = projectionMatrix;
+
+    // Render labels for each cube
+    for (int i = 0; i < 6; ++i)
+    {
+        // Calculate position below the cube
+        glm::vec3 labelWorldPos = cubePositions[i] + glm::vec3(0.0f, -0.8f, 0.0f); // 0.8 units below cube
+
+        // Project 3D position to screen coordinates
+        glm::vec4 clipSpacePos = projection * view * glm::vec4(labelWorldPos, 1.0f);
+
+        // Perform perspective divide
+        glm::vec3 ndcPos = glm::vec3(clipSpacePos) / clipSpacePos.w;
+
+        // Convert to screen coordinates
+        float screenX = (ndcPos.x + 1.0f) * 0.5f * windowWidth;
+        float screenY = (1.0f - ndcPos.y) * 0.5f * windowHeight; // Flip Y axis
+
+        // Only render if the label is visible (in front of camera and within screen bounds)
+        if (clipSpacePos.w > 0.0f && ndcPos.x >= -1.0f && ndcPos.x <= 1.0f &&
+            ndcPos.y >= -1.0f && ndcPos.y <= 1.0f)
+        {
+            // Create label text
+            std::string labelText = "LOUDSPEAKER " + std::to_string(i + 1); // 1-based indexing
+
+            // Render the text centered horizontally below the cube
+            float textWidth = GUI::calculateTextWidth(labelText, 0.4f);
+            float centeredX = screenX - (textWidth / 2.0f);
+
+            GUI::renderText(textShaderProgram, labelText, centeredX, screenY, 0.6f,
+                            glm::vec3(1.0f, 1.0f, 1.0f), windowWidth, windowHeight); // White text
+        }
+    }
 }
 
 void Application::handleMouseButton(int button, int action, int mods, double xpos, double ypos)

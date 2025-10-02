@@ -69,4 +69,5 @@ private:
     void render();
     void renderScene();
     void renderGUI();
+    void renderCubeLabels();
 };
