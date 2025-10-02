@@ -9,7 +9,7 @@
 
 Application::Application()
     : window(nullptr), windowWidth(800), windowHeight(600),
-      shaderProgram(0), guiShaderProgram(0),
+      shaderProgram(0), guiShaderProgram(0), textShaderProgram(0),
       sphereVAO(0), sphereVBO(0), sphereEBO(0),
       cubeVAO(0), cubeVBO(0), cubeEBO(0),
       gridVAO(0), gridVBO(0), gridEBO(0),
@@ -90,6 +90,7 @@ bool Application::initializeOpenGL()
     // Compile shaders
     shaderProgram = ShaderManager::create3DShaderProgram();
     guiShaderProgram = ShaderManager::createGUIShaderProgram();
+    textShaderProgram = ShaderManager::createTextShaderProgram();
 
     // Initialize GUI system
     GUI::initialize();
@@ -222,7 +223,7 @@ void Application::renderScene()
 void Application::renderGUI()
 {
     // Render GUI buttons
-    GUI::renderButton(guiShaderProgram, GUI::getGenerateButton(), windowWidth, windowHeight);
+    GUI::renderButton(guiShaderProgram, textShaderProgram, GUI::getGenerateButton(), windowWidth, windowHeight);
 }
 
 void Application::handleMouseButton(int button, int action, int mods, double xpos, double ypos)
@@ -394,6 +395,11 @@ void Application::cleanup()
     if (guiShaderProgram)
     {
         glDeleteProgram(guiShaderProgram);
+    }
+
+    if (textShaderProgram)
+    {
+        glDeleteProgram(textShaderProgram);
     }
 
     // Cleanup GUI

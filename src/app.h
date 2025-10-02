@@ -39,6 +39,7 @@ private:
     // Shader programs
     GLuint shaderProgram;
     GLuint guiShaderProgram;
+    GLuint textShaderProgram;
 
     // OpenGL objects for different geometries
     GLuint sphereVAO, sphereVBO, sphereEBO;

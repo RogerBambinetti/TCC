@@ -16,6 +16,12 @@ namespace Shaders
 
     // GUI Fragment Shader
     extern const char *guiFragmentShaderSource;
+
+    // Text Vertex Shader
+    extern const char *textVertexShaderSource;
+
+    // Text Fragment Shader
+    extern const char *textFragmentShaderSource;
 }
 
 // Shader compilation and linking functions
@@ -30,4 +36,7 @@ public:
 
     // Create the GUI shader program
     static GLuint createGUIShaderProgram();
+
+    // Create the text shader program
+    static GLuint createTextShaderProgram();
 };

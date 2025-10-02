@@ -52,6 +52,37 @@ void main()
     FragColor = vec4(color, 1.0);
 }
 )";
+
+    // Text Vertex Shader Source Code
+    const char *textVertexShaderSource = R"(
+#version 330 core
+layout(location = 0) in vec4 vertex; // <vec2 pos, vec2 tex>
+out vec2 TexCoords;
+
+uniform mat4 projection;
+
+void main()
+{
+    gl_Position = projection * vec4(vertex.xy, 0.0, 1.0);
+    TexCoords = vertex.zw;
+}
+)";
+
+    // Text Fragment Shader Source Code
+    const char *textFragmentShaderSource = R"(
+#version 330 core
+in vec2 TexCoords;
+out vec4 color;
+
+uniform sampler2D text;
+uniform vec3 textColor;
+
+void main()
+{
+    vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, TexCoords).r);
+    color = vec4(textColor, 1.0) * sampled;
+}
+)";
 }
 
 GLuint ShaderManager::compileShaders(const char *vertexSource, const char *fragmentSource)
@@ -112,4 +143,9 @@ GLuint ShaderManager::create3DShaderProgram()
 GLuint ShaderManager::createGUIShaderProgram()
 {
     return compileShaders(Shaders::guiVertexShaderSource, Shaders::guiFragmentShaderSource);
+}
+
+GLuint ShaderManager::createTextShaderProgram()
+{
+    return compileShaders(Shaders::textVertexShaderSource, Shaders::textFragmentShaderSource);
 }
