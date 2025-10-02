@@ -90,6 +90,14 @@ struct Button
     bool isPressed;
 };
 
+struct CICPGeometry
+{
+    float azimuth;
+    float elevation;
+    int isLFE;
+    int screenRef;
+};
+
 // GUI buttons
 Button generateButton = {20.0f, 20.0f, 140.0f, 40.0f, "Generate Layout", false, false};
 
@@ -328,11 +336,40 @@ bool rayCubeIntersection(const glm::vec3 &rayOrigin, const glm::vec3 &rayDir, co
     return true;
 }
 
+CICPGeometry cartesianToCICP(const glm::vec3 &pos, bool isLFE = false)
+{
+    // Calculate distance from origin
+    float distance = glm::length(pos);
+
+    // Calculate azimuth (horizontal angle)
+    // atan2(x, -z) because in audio: 0° = front (-Z), +angle = left (+X)
+    float azimuth = glm::degrees(std::atan2(pos.x, -pos.z));
+
+    // Calculate elevation (vertical angle)
+    float horizontalDist = std::sqrt(pos.x * pos.x + pos.z * pos.z);
+    float elevation = glm::degrees(std::atan2(pos.y, horizontalDist));
+
+    return {azimuth, elevation, isLFE ? 1 : 0, 0};
+}
+
+void convertToCICP(const glm::vec3 cubePositions[6])
+{
+    std::cout << "6\n";
+    for (int i = 0; i < 6; i++)
+    {
+        CICPGeometry geom = cartesianToCICP(cubePositions[i]);
+        std::cout << "g,"
+                  << std::round(geom.azimuth) << ","
+                  << std::round(geom.elevation) << ","
+                  << geom.isLFE << ","
+                  << geom.screenRef << "\n";
+    }
+}
+
 // Button callback functions
 void onGenerateLayoutClick()
 {
-    // Empty function - will be implemented later
-    std::cout << "Generate Layout button clicked!" << std::endl;
+    convertToCICP(cubePositions);
 }
 
 // Function to check if point is inside button
