@@ -16,6 +16,7 @@ FT_Face GUI::face;
 #endif
 
 Button GUI::generateButton(20.0f, 20.0f, 140.0f, 40.0f, "GENERATE CICP");
+Button GUI::convertButton(170.0f, 20.0f, 100.0f, 40.0f, "CONVERT");
 
 void GUI::initialize()
 {
@@ -118,6 +119,10 @@ void GUI::renderButton(GLuint guiShader, GLuint textShader, const Button &button
     {
         baseColor = glm::vec3(0.2f, 0.5f, 0.8f); // Blue for Generate CICP
     }
+    else if (button.label == "CONVERT")
+    {
+        baseColor = glm::vec3(0.2f, 0.7f, 0.3f); // Green for Convert
+    }
     else if (button.label == "Cancel")
     {
         baseColor = glm::vec3(0.7f, 0.3f, 0.3f); // Red for Cancel
@@ -207,6 +212,11 @@ void GUI::renderButton(GLuint guiShader, GLuint textShader, const Button &button
 Button &GUI::getGenerateButton()
 {
     return generateButton;
+}
+
+Button &GUI::getConvertButton()
+{
+    return convertButton;
 }
 
 float GUI::calculateTextWidth(const std::string &text, float scale)

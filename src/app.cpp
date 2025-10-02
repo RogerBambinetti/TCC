@@ -224,6 +224,7 @@ void Application::renderGUI()
 {
     // Render GUI buttons
     GUI::renderButton(guiShaderProgram, textShaderProgram, GUI::getGenerateButton(), windowWidth, windowHeight);
+    GUI::renderButton(guiShaderProgram, textShaderProgram, GUI::getConvertButton(), windowWidth, windowHeight);
 }
 
 void Application::handleMouseButton(int button, int action, int mods, double xpos, double ypos)
@@ -237,6 +238,12 @@ void Application::handleMouseButton(int button, int action, int mods, double xpo
             {
                 GUI::getGenerateButton().isPressed = true;
                 onGenerateLayoutClick();
+                return;
+            }
+            else if (GUI::isPointInButton((float)xpos, (float)ypos, GUI::getConvertButton()))
+            {
+                GUI::getConvertButton().isPressed = true;
+                onConvertClick();
                 return;
             }
 
@@ -288,6 +295,7 @@ void Application::handleMouseButton(int button, int action, int mods, double xpo
         {
             // Reset button states
             GUI::getGenerateButton().isPressed = false;
+            GUI::getConvertButton().isPressed = false;
             isDragging = false;
         }
     }
@@ -297,6 +305,7 @@ void Application::handleCursorPos(double xpos, double ypos)
 {
     // Update button hover states
     GUI::getGenerateButton().isHovered = GUI::isPointInButton((float)xpos, (float)ypos, GUI::getGenerateButton());
+    GUI::getConvertButton().isHovered = GUI::isPointInButton((float)xpos, (float)ypos, GUI::getConvertButton());
 
     if (isDragging && selectedCube != -1)
     {
@@ -361,6 +370,12 @@ void Application::handleFramebufferSize(int width, int height)
 void Application::onGenerateLayoutClick()
 {
     MathUtils::convertToCICP(cubePositions);
+}
+
+void Application::onConvertClick()
+{
+    std::cout << "Convert button clicked!" << std::endl;
+    // TODO: Implement convert functionality
 }
 
 void Application::cleanup()

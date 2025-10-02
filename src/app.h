@@ -27,8 +27,9 @@ public:
     void handleCursorPos(double xpos, double ypos);
     void handleFramebufferSize(int width, int height);
 
-    // Button callback
+    // Button callbacks
     void onGenerateLayoutClick();
+    void onConvertClick();
 
 private:
     // Window and OpenGL context

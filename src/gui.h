@@ -58,6 +58,9 @@ public:
     // Get the generate layout button instance
     static Button &getGenerateButton();
 
+    // Get the convert button instance
+    static Button &getConvertButton();
+
     // Calculate actual text width using character metrics
     static float calculateTextWidth(const std::string &text, float scale);
 
@@ -65,6 +68,7 @@ private:
     static GLuint buttonVAO, buttonVBO, buttonEBO;
     static GLuint textVAO, textVBO;
     static Button generateButton;
+    static Button convertButton;
     static std::map<char, Character> characters;
 
 #if USE_FREETYPE
