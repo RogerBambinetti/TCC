@@ -263,7 +263,7 @@ void Application::renderCubeLabels()
             float centeredX = screenX - (textWidth / 2.0f);
 
             GUI::renderText(textShaderProgram, labelText, centeredX, screenY, 0.6f,
-                            glm::vec3(1.0f, 1.0f, 1.0f), windowWidth, windowHeight); // White text
+                            glm::vec3(1.0f, 0.5f, 0.5f), windowWidth, windowHeight); // Light red text (same as cube selection)
         }
     }
 }
