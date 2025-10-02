@@ -1,9 +1,10 @@
 #include "shader.h"
 #include <iostream>
 
-namespace Shaders {
+namespace Shaders
+{
     // 3D Object Vertex Shader Source Code
-    const char* vertexShaderSource = R"(
+    const char *vertexShaderSource = R"(
 #version 330 core
 layout(location = 0) in vec3 aPos;
 uniform mat4 model;
@@ -16,7 +17,7 @@ void main()
 )";
 
     // 3D Object Fragment Shader Source Code
-    const char* fragmentShaderSource = R"(
+    const char *fragmentShaderSource = R"(
 #version 330 core
 out vec4 FragColor;
 uniform bool isSelected;
@@ -31,7 +32,7 @@ void main()
 )";
 
     // GUI Vertex Shader Source Code
-    const char* guiVertexShaderSource = R"(
+    const char *guiVertexShaderSource = R"(
 #version 330 core
 layout(location = 0) in vec2 aPos;
 uniform mat4 projection;
@@ -42,7 +43,7 @@ void main()
 )";
 
     // GUI Fragment Shader Source Code
-    const char* guiFragmentShaderSource = R"(
+    const char *guiFragmentShaderSource = R"(
 #version 330 core
 out vec4 FragColor;
 uniform vec3 color;
@@ -53,7 +54,8 @@ void main()
 )";
 }
 
-GLuint ShaderManager::compileShaders(const char* vertexSource, const char* fragmentSource) {
+GLuint ShaderManager::compileShaders(const char *vertexSource, const char *fragmentSource)
+{
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexSource, NULL);
     glCompileShader(vertexShader);
@@ -62,9 +64,11 @@ GLuint ShaderManager::compileShaders(const char* vertexSource, const char* fragm
     int success;
     char infoLog[512];
     glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
+    if (!success)
+    {
         glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+        std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
+                  << infoLog << std::endl;
     }
 
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -73,9 +77,11 @@ GLuint ShaderManager::compileShaders(const char* vertexSource, const char* fragm
 
     // Check for fragment shader compilation errors
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
+    if (!success)
+    {
         glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+        std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"
+                  << infoLog << std::endl;
     }
 
     GLuint shaderProgram = glCreateProgram();
@@ -85,9 +91,11 @@ GLuint ShaderManager::compileShaders(const char* vertexSource, const char* fragm
 
     // Check for program linking errors
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
+    if (!success)
+    {
         glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
+                  << infoLog << std::endl;
     }
 
     glDeleteShader(vertexShader);
@@ -96,10 +104,12 @@ GLuint ShaderManager::compileShaders(const char* vertexSource, const char* fragm
     return shaderProgram;
 }
 
-GLuint ShaderManager::create3DShaderProgram() {
+GLuint ShaderManager::create3DShaderProgram()
+{
     return compileShaders(Shaders::vertexShaderSource, Shaders::fragmentShaderSource);
 }
 
-GLuint ShaderManager::createGUIShaderProgram() {
+GLuint ShaderManager::createGUIShaderProgram()
+{
     return compileShaders(Shaders::guiVertexShaderSource, Shaders::guiFragmentShaderSource);
 }

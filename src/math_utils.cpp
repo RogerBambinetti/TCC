@@ -1,9 +1,10 @@
 #include "math_utils.h"
 #include <cmath>
 
-glm::vec3 MathUtils::screenToWorld(double screenX, double screenY, float worldZ, 
-                                  const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix,
-                                  int windowWidth, int windowHeight) {
+glm::vec3 MathUtils::screenToWorld(double screenX, double screenY, float worldZ,
+                                   const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix,
+                                   int windowWidth, int windowHeight)
+{
     // Viewport transform
     glm::vec4 viewport = glm::vec4(0, 0, windowWidth, windowHeight);
 
@@ -35,8 +36,9 @@ glm::vec3 MathUtils::screenToWorld(double screenX, double screenY, float worldZ,
     return intersectionPoint;
 }
 
-bool MathUtils::rayCubeIntersection(const glm::vec3& rayOrigin, const glm::vec3& rayDir, 
-                                   const glm::vec3& cubePos, float cubeSize, float& distance) {
+bool MathUtils::rayCubeIntersection(const glm::vec3 &rayOrigin, const glm::vec3 &rayDir,
+                                    const glm::vec3 &cubePos, float cubeSize, float &distance)
+{
     glm::vec3 min = cubePos - glm::vec3(cubeSize);
     glm::vec3 max = cubePos + glm::vec3(cubeSize);
 
@@ -83,7 +85,8 @@ bool MathUtils::rayCubeIntersection(const glm::vec3& rayOrigin, const glm::vec3&
     return true;
 }
 
-CICPGeometry MathUtils::cartesianToCICP(const glm::vec3& pos, bool isLFE) {
+CICPGeometry MathUtils::cartesianToCICP(const glm::vec3 &pos, bool isLFE)
+{
     // Calculate distance from origin
     float distance = glm::length(pos);
 
@@ -98,9 +101,11 @@ CICPGeometry MathUtils::cartesianToCICP(const glm::vec3& pos, bool isLFE) {
     return {azimuth, elevation, isLFE ? 1 : 0, 0};
 }
 
-void MathUtils::convertToCICP(const glm::vec3 cubePositions[6]) {
+void MathUtils::convertToCICP(const glm::vec3 cubePositions[6])
+{
     std::cout << "6\n";
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++)
+    {
         CICPGeometry geom = cartesianToCICP(cubePositions[i]);
         std::cout << "g,"
                   << std::round(geom.azimuth) << ","

@@ -7,7 +7,8 @@ GLuint GUI::buttonVBO = 0;
 GLuint GUI::buttonEBO = 0;
 Button GUI::generateButton(20.0f, 20.0f, 140.0f, 40.0f, "Generate Layout");
 
-void GUI::initialize() {
+void GUI::initialize()
+{
     // Create VAO and VBO for GUI buttons
     glGenVertexArrays(1, &buttonVAO);
     glGenBuffers(1, &buttonVBO);
@@ -34,25 +35,28 @@ void GUI::initialize() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buttonEBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(buttonIndices), buttonIndices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
     // Unbind VAO
     glBindVertexArray(0);
 }
 
-void GUI::cleanup() {
+void GUI::cleanup()
+{
     glDeleteVertexArrays(1, &buttonVAO);
     glDeleteBuffers(1, &buttonVBO);
     glDeleteBuffers(1, &buttonEBO);
 }
 
-bool GUI::isPointInButton(float x, float y, const Button& button) {
+bool GUI::isPointInButton(float x, float y, const Button &button)
+{
     return (x >= button.x && x <= button.x + button.width &&
             y >= button.y && y <= button.y + button.height);
 }
 
-void GUI::renderButton(GLuint guiShader, const Button& button, int windowWidth, int windowHeight) {
+void GUI::renderButton(GLuint guiShader, const Button &button, int windowWidth, int windowHeight)
+{
     glUseProgram(guiShader);
 
     // Create orthographic projection matrix for 2D GUI
@@ -64,21 +68,31 @@ void GUI::renderButton(GLuint guiShader, const Button& button, int windowWidth, 
 
     // Different base colors for different buttons
     glm::vec3 baseColor;
-    if (button.label == "Generate Layout") {
+    if (button.label == "Generate Layout")
+    {
         baseColor = glm::vec3(0.3f, 0.7f, 0.3f); // Green for Generate Layout
-    } else if (button.label == "Cancel") {
+    }
+    else if (button.label == "Cancel")
+    {
         baseColor = glm::vec3(0.7f, 0.3f, 0.3f); // Red for Cancel
-    } else {
+    }
+    else
+    {
         baseColor = glm::vec3(0.5f, 0.5f, 0.5f); // Default gray
     }
 
     // Modify color based on button state
-    if (button.isPressed) {
+    if (button.isPressed)
+    {
         color = baseColor * 0.6f; // Darker when pressed
-    } else if (button.isHovered) {
+    }
+    else if (button.isHovered)
+    {
         color = baseColor * 1.2f;                 // Brighter when hovered
         color = glm::min(color, glm::vec3(1.0f)); // Clamp to prevent overflow
-    } else {
+    }
+    else
+    {
         color = baseColor; // Default color
     }
 
@@ -107,6 +121,7 @@ void GUI::renderButton(GLuint guiShader, const Button& button, int windowWidth, 
     glEnable(GL_DEPTH_TEST);
 }
 
-Button& GUI::getGenerateButton() {
+Button &GUI::getGenerateButton()
+{
     return generateButton;
 }

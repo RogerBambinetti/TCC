@@ -13,8 +13,9 @@ Application::Application()
       sphereVAO(0), sphereVBO(0), sphereEBO(0),
       cubeVAO(0), cubeVBO(0), cubeEBO(0),
       gridVAO(0), gridVBO(0), gridEBO(0),
-      isDragging(false), selectedCube(-1), dragPlaneY(0.0f) {
-    
+      isDragging(false), selectedCube(-1), dragPlaneY(0.0f)
+{
+
     // Initialize cube positions
     cubePositions[0] = glm::vec3(2.0f, 0.5f, -2.0f);
     cubePositions[1] = glm::vec3(-2.0f, 0.5f, -2.0f);
@@ -24,26 +25,32 @@ Application::Application()
     cubePositions[5] = glm::vec3(0.0f, 0.5f, -2.0f);
 }
 
-Application::~Application() {
+Application::~Application()
+{
     cleanup();
 }
 
-bool Application::initialize() {
-    if (!initializeWindow()) {
+bool Application::initialize()
+{
+    if (!initializeWindow())
+    {
         return false;
     }
-    
-    if (!initializeOpenGL()) {
+
+    if (!initializeOpenGL())
+    {
         return false;
     }
-    
+
     initializeGeometry();
     return true;
 }
 
-bool Application::initializeWindow() {
+bool Application::initializeWindow()
+{
     // Initialize GLFW
-    if (!glfwInit()) {
+    if (!glfwInit())
+    {
         std::cerr << "Failed to initialize GLFW" << std::endl;
         return false;
     }
@@ -55,7 +62,8 @@ bool Application::initializeWindow() {
 
     // Create a windowed mode window and its OpenGL context
     window = glfwCreateWindow(windowWidth, windowHeight, "3D GUI", NULL, NULL);
-    if (!window) {
+    if (!window)
+    {
         std::cerr << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
         return false;
@@ -63,16 +71,18 @@ bool Application::initializeWindow() {
 
     // Make the window's context current
     glfwMakeContextCurrent(window);
-    
+
     // Initialize input handling
     InputHandler::initialize(window, this);
-    
+
     return true;
 }
 
-bool Application::initializeOpenGL() {
+bool Application::initializeOpenGL()
+{
     // Load all OpenGL functions using GLAD
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
         std::cerr << "Failed to initialize GLAD" << std::endl;
         return false;
     }
@@ -80,20 +90,21 @@ bool Application::initializeOpenGL() {
     // Compile shaders
     shaderProgram = ShaderManager::create3DShaderProgram();
     guiShaderProgram = ShaderManager::createGUIShaderProgram();
-    
+
     // Initialize GUI system
     GUI::initialize();
 
     // Enable depth testing
     glEnable(GL_DEPTH_TEST);
-    
+
     // Set initial projection matrix
     projectionMatrix = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
-    
+
     return true;
 }
 
-void Application::initializeGeometry() {
+void Application::initializeGeometry()
+{
     // Generate geometries
     GeometryGenerator::generateSphere(sphereVertices, sphereIndices, 0.5f, 36, 18);
     GeometryGenerator::generateCube(cubeVertices, cubeIndices, 0.5f);
@@ -109,7 +120,7 @@ void Application::initializeGeometry() {
     glBufferData(GL_ARRAY_BUFFER, sphereVertices.size() * sizeof(float), sphereVertices.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sphereEBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphereIndices.size() * sizeof(unsigned int), sphereIndices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
     // Create VAO, VBO, and EBO for cube
@@ -122,7 +133,7 @@ void Application::initializeGeometry() {
     glBufferData(GL_ARRAY_BUFFER, cubeVertices.size() * sizeof(float), cubeVertices.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, cubeIndices.size() * sizeof(unsigned int), cubeIndices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
     // Create VAO, VBO, and EBO for grid
@@ -135,35 +146,39 @@ void Application::initializeGeometry() {
     glBufferData(GL_ARRAY_BUFFER, gridVertices.size() * sizeof(float), gridVertices.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gridEBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, gridIndices.size() * sizeof(unsigned int), gridIndices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
     // Unbind VAO
     glBindVertexArray(0);
 }
 
-void Application::run() {
+void Application::run()
+{
     // Main loop
-    while (!glfwWindowShouldClose(window)) {
+    while (!glfwWindowShouldClose(window))
+    {
         render();
-        
+
         // Swap front and back buffers
         glfwSwapBuffers(window);
-        
+
         // Poll for and process events
         glfwPollEvents();
     }
 }
 
-void Application::render() {
+void Application::render()
+{
     // Clear the color and depth buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
+
     renderScene();
     renderGUI();
 }
 
-void Application::renderScene() {
+void Application::renderScene()
+{
     // Use the 3D shader program
     glUseProgram(shaderProgram);
 
@@ -192,7 +207,8 @@ void Application::renderScene() {
     glDrawElements(GL_TRIANGLES, sphereIndices.size(), GL_UNSIGNED_INT, 0);
 
     // Render cubes
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 6; ++i)
+    {
         // Set selection uniform
         glUniform1i(glGetUniformLocation(shaderProgram, "isSelected"), (i == selectedCube) ? 1 : 0);
 
@@ -203,16 +219,21 @@ void Application::renderScene() {
     }
 }
 
-void Application::renderGUI() {
+void Application::renderGUI()
+{
     // Render GUI buttons
     GUI::renderButton(guiShaderProgram, GUI::getGenerateButton(), windowWidth, windowHeight);
 }
 
-void Application::handleMouseButton(int button, int action, int mods, double xpos, double ypos) {
-    if (button == GLFW_MOUSE_BUTTON_LEFT) {
-        if (action == GLFW_PRESS) {
+void Application::handleMouseButton(int button, int action, int mods, double xpos, double ypos)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT)
+    {
+        if (action == GLFW_PRESS)
+        {
             // Check button clicks first (GUI has priority)
-            if (GUI::isPointInButton((float)xpos, (float)ypos, GUI::getGenerateButton())) {
+            if (GUI::isPointInButton((float)xpos, (float)ypos, GUI::getGenerateButton()))
+            {
                 GUI::getGenerateButton().isPressed = true;
                 onGenerateLayoutClick();
                 return;
@@ -242,22 +263,28 @@ void Application::handleMouseButton(int button, int action, int mods, double xpo
             float minDistance = FLT_MAX;
             selectedCube = -1;
 
-            for (int i = 0; i < 6; ++i) {
+            for (int i = 0; i < 6; ++i)
+            {
                 float distance;
-                if (MathUtils::rayCubeIntersection(rayOrigin, rayDir, cubePositions[i], 0.5f, distance)) {
-                    if (distance < minDistance) {
+                if (MathUtils::rayCubeIntersection(rayOrigin, rayDir, cubePositions[i], 0.5f, distance))
+                {
+                    if (distance < minDistance)
+                    {
                         minDistance = distance;
                         selectedCube = i;
                     }
                 }
             }
 
-            if (selectedCube != -1) {
+            if (selectedCube != -1)
+            {
                 isDragging = true;
                 // Calculate the Y plane for dragging (use the cube's current Y position)
                 dragPlaneY = cubePositions[selectedCube].y;
             }
-        } else if (action == GLFW_RELEASE) {
+        }
+        else if (action == GLFW_RELEASE)
+        {
             // Reset button states
             GUI::getGenerateButton().isPressed = false;
             isDragging = false;
@@ -265,11 +292,13 @@ void Application::handleMouseButton(int button, int action, int mods, double xpo
     }
 }
 
-void Application::handleCursorPos(double xpos, double ypos) {
+void Application::handleCursorPos(double xpos, double ypos)
+{
     // Update button hover states
     GUI::getGenerateButton().isHovered = GUI::isPointInButton((float)xpos, (float)ypos, GUI::getGenerateButton());
 
-    if (isDragging && selectedCube != -1) {
+    if (isDragging && selectedCube != -1)
+    {
         // Check if Shift key is pressed
         bool shiftPressed = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
                             glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
@@ -292,14 +321,17 @@ void Application::handleCursorPos(double xpos, double ypos) {
         glm::vec3 rayOrigin = nearPoint;
         glm::vec3 rayDir = glm::normalize(farPoint - nearPoint);
 
-        if (shiftPressed) {
+        if (shiftPressed)
+        {
             // Vertical movement: Move along y-axis based on mouse y delta
             float mouseDeltaY = (ypos - lastMousePos.y) * -0.01f; // Negate for intuitive up/down
             cubePositions[selectedCube].y += mouseDeltaY;
 
             // Update dragPlaneY to follow the cube's Y position
             dragPlaneY = cubePositions[selectedCube].y;
-        } else {
+        }
+        else
+        {
             // Horizontal movement (original behavior)
             // Calculate t where the ray intersects the Y plane
             float t = (dragPlaneY - rayOrigin.y) / rayDir.y;
@@ -317,42 +349,50 @@ void Application::handleCursorPos(double xpos, double ypos) {
     }
 }
 
-void Application::handleFramebufferSize(int width, int height) {
+void Application::handleFramebufferSize(int width, int height)
+{
     glViewport(0, 0, width, height);
     windowWidth = width;
     windowHeight = height;
     projectionMatrix = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
 }
 
-void Application::onGenerateLayoutClick() {
+void Application::onGenerateLayoutClick()
+{
     MathUtils::convertToCICP(cubePositions);
 }
 
-void Application::cleanup() {
+void Application::cleanup()
+{
     // Clean up OpenGL resources
-    if (sphereVAO) {
+    if (sphereVAO)
+    {
         glDeleteVertexArrays(1, &sphereVAO);
         glDeleteBuffers(1, &sphereVBO);
         glDeleteBuffers(1, &sphereEBO);
     }
 
-    if (cubeVAO) {
+    if (cubeVAO)
+    {
         glDeleteVertexArrays(1, &cubeVAO);
         glDeleteBuffers(1, &cubeVBO);
         glDeleteBuffers(1, &cubeEBO);
     }
 
-    if (gridVAO) {
+    if (gridVAO)
+    {
         glDeleteVertexArrays(1, &gridVAO);
         glDeleteBuffers(1, &gridVBO);
         glDeleteBuffers(1, &gridEBO);
     }
 
-    if (shaderProgram) {
+    if (shaderProgram)
+    {
         glDeleteProgram(shaderProgram);
     }
-    
-    if (guiShaderProgram) {
+
+    if (guiShaderProgram)
+    {
         glDeleteProgram(guiShaderProgram);
     }
 
@@ -360,7 +400,8 @@ void Application::cleanup() {
     GUI::cleanup();
 
     // Terminate GLFW
-    if (window) {
+    if (window)
+    {
         glfwTerminate();
     }
 }
