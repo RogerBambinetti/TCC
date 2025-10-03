@@ -1,5 +1,7 @@
 #include "math_utils.h"
 #include <cmath>
+#include <fstream>
+#include <iostream>
 
 glm::vec3 MathUtils::screenToWorld(double screenX, double screenY, float worldZ,
                                    const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix,
@@ -103,14 +105,26 @@ CICPGeometry MathUtils::cartesianToCICP(const glm::vec3 &pos, bool isLFE)
 
 void MathUtils::convertToCICP(const glm::vec3 cubePositions[6])
 {
-    std::cout << "6\n";
+    // Open file for writing in the project root directory
+    std::ofstream outFile("user_geo.txt");
+
+    if (!outFile.is_open())
+    {
+        std::cerr << "Error: Could not create user_geo.txt file" << std::endl;
+        return;
+    }
+
+    outFile << "6\n";
     for (int i = 0; i < 6; i++)
     {
         CICPGeometry geom = cartesianToCICP(cubePositions[i]);
-        std::cout << "g,"
-                  << std::round(geom.azimuth) << ","
-                  << std::round(geom.elevation) << ","
-                  << geom.isLFE << ","
-                  << geom.screenRef << "\n";
+        outFile << "g,"
+                << std::round(geom.azimuth) << ","
+                << std::round(geom.elevation) << ","
+                << geom.isLFE << ","
+                << geom.screenRef << "\n";
     }
+
+    outFile.close();
+    std::cout << "CICP geometry data written to user_geo.txt" << std::endl;
 }
