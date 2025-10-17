@@ -18,12 +18,12 @@ Application::Application()
 {
 
     // Initialize cube positions
-    cubePositions[0] = glm::vec3(2.0f, 0.5f, -2.0f);
-    cubePositions[1] = glm::vec3(-2.0f, 0.5f, -2.0f);
-    cubePositions[2] = glm::vec3(2.0f, 0.5f, 2.0f);
-    cubePositions[3] = glm::vec3(-2.0f, 0.5f, 2.0f);
-    cubePositions[4] = glm::vec3(0.0f, 0.5f, 2.0f);
-    cubePositions[5] = glm::vec3(0.0f, 0.5f, -2.0f);
+    cubePositions[0] = glm::vec3(1.0f, 0.0f, -1.732f);  // Left front (30°)
+    cubePositions[1] = glm::vec3(-1.0f, 0.0f, -1.732f); // Right front (-30°)
+    cubePositions[2] = glm::vec3(0.0f, 0.0f, -2.0f);    // Center front (0°)
+    cubePositions[3] = glm::vec3(0.0f, -0.268f, -1.0f); // Low front (-15° elevation)
+    cubePositions[4] = glm::vec3(1.879f, 0.0f, 0.684f);   // Left side (110°)
+    cubePositions[5] = glm::vec3(-1.879f, 0.0f, 0.684f);  // Right side (-110°)
 }
 
 Application::~Application()
@@ -415,8 +415,13 @@ void Application::onGenerateLayoutClick()
 
 void Application::onConvertClick()
 {
-    std::cout << "Convert button clicked!" << std::endl;
-    // TODO: Implement convert functionality
+    std::cout << "Running 3DAudioDecoder..." << std::endl;
+    std::string command = "reference_soft\\build\\bin\\Debug\\3DAudioDecoder.exe -if infile.m4a -of outfile.wav -cicpOut -1 -outGeo user_geo.txt";
+    int result = system(command.c_str());
+    if (result != 0)
+    {
+        std::cerr << "Error running 3DAudioDecoder" << std::endl;
+    }
 }
 
 void Application::cleanup()
