@@ -18,12 +18,12 @@ Application::Application()
 {
 
     // Initialize cube positions
-    cubePositions[0] = glm::vec3(1.0f, 0.0f, -1.732f);  // Left front (30°)
-    cubePositions[1] = glm::vec3(-1.0f, 0.0f, -1.732f); // Right front (-30°)
-    cubePositions[2] = glm::vec3(0.0f, 0.0f, -2.0f);    // Center front (0°)
-    cubePositions[3] = glm::vec3(0.0f, -0.268f, -1.0f); // Low front (-15° elevation)
-    cubePositions[4] = glm::vec3(1.879f, 0.0f, 0.684f);   // Left side (110°)
-    cubePositions[5] = glm::vec3(-1.879f, 0.0f, 0.684f);  // Right side (-110°)
+    cubePositions[0] = glm::vec3(1.0f, 0.0f, -1.732f);   // Left front (30°)
+    cubePositions[1] = glm::vec3(-1.0f, 0.0f, -1.732f);  // Right front (-30°)
+    cubePositions[2] = glm::vec3(0.0f, 0.0f, -2.0f);     // Center front (0°)
+    cubePositions[3] = glm::vec3(0.0f, -0.268f, -1.0f);  // Low front (-15° elevation)
+    cubePositions[4] = glm::vec3(1.879f, 0.0f, 0.684f);  // Left side (110°)
+    cubePositions[5] = glm::vec3(-1.879f, 0.0f, 0.684f); // Right side (-110°)
 }
 
 Application::~Application()
@@ -109,7 +109,7 @@ void Application::initializeGeometry()
 {
     // Generate geometries
     GeometryGenerator::generateSphere(sphereVertices, sphereIndices, 0.5f, 36, 18);
-    GeometryGenerator::generateCube(cubeVertices, cubeIndices, 0.5f);
+    GeometryGenerator::generateCube(cubeVertices, cubeIndices, 0.3f);
     GeometryGenerator::generateGrid(gridVertices, gridIndices, 5.0f, 10);
 
     // Create VAO, VBO, and EBO for sphere
@@ -315,7 +315,7 @@ void Application::handleMouseButton(int button, int action, int mods, double xpo
             for (int i = 0; i < 6; ++i)
             {
                 float distance;
-                if (MathUtils::rayCubeIntersection(rayOrigin, rayDir, cubePositions[i], 0.5f, distance))
+                if (MathUtils::rayCubeIntersection(rayOrigin, rayDir, cubePositions[i], 0.3f, distance))
                 {
                     if (distance < minDistance)
                     {
