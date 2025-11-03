@@ -54,25 +54,54 @@ void GeometryGenerator::generateSphere(std::vector<float> &vertices, std::vector
 void GeometryGenerator::generateCube(std::vector<float> &vertices, std::vector<unsigned int> &indices,
                                      float size)
 {
+    // Vertices with positions and normals (x,y,z,nx,ny,nz)
     float verticesArray[] = {
-        -size, -size, -size,
-        size, -size, -size,
-        size, size, -size,
-        -size, size, -size,
-        -size, -size, size,
-        size, -size, size,
-        size, size, size,
-        -size, size, size};
+        // Front face
+        -size, -size, -size, 0.0f, 0.0f, -1.0f,
+        size, -size, -size, 0.0f, 0.0f, -1.0f,
+        size, size, -size, 0.0f, 0.0f, -1.0f,
+        -size, size, -size, 0.0f, 0.0f, -1.0f,
+
+        // Back face
+        -size, -size, size, 0.0f, 0.0f, 1.0f,
+        size, -size, size, 0.0f, 0.0f, 1.0f,
+        size, size, size, 0.0f, 0.0f, 1.0f,
+        -size, size, size, 0.0f, 0.0f, 1.0f,
+
+        // Top face
+        -size, size, -size, 0.0f, 1.0f, 0.0f,
+        size, size, -size, 0.0f, 1.0f, 0.0f,
+        size, size, size, 0.0f, 1.0f, 0.0f,
+        -size, size, size, 0.0f, 1.0f, 0.0f,
+
+        // Bottom face
+        -size, -size, -size, 0.0f, -1.0f, 0.0f,
+        size, -size, -size, 0.0f, -1.0f, 0.0f,
+        size, -size, size, 0.0f, -1.0f, 0.0f,
+        -size, -size, size, 0.0f, -1.0f, 0.0f,
+
+        // Right face
+        size, -size, -size, 1.0f, 0.0f, 0.0f,
+        size, size, -size, 1.0f, 0.0f, 0.0f,
+        size, size, size, 1.0f, 0.0f, 0.0f,
+        size, -size, size, 1.0f, 0.0f, 0.0f,
+
+        // Left face
+        -size, -size, -size, -1.0f, 0.0f, 0.0f,
+        -size, size, -size, -1.0f, 0.0f, 0.0f,
+        -size, size, size, -1.0f, 0.0f, 0.0f,
+        -size, -size, size, -1.0f, 0.0f, 0.0f};
 
     unsigned int indicesArray[] = {
-        0, 1, 2, 2, 3, 0,
-        4, 5, 6, 6, 7, 4,
-        0, 1, 5, 5, 4, 0,
-        2, 3, 7, 7, 6, 2,
-        0, 3, 7, 7, 4, 0,
-        1, 2, 6, 6, 5, 1};
+        0, 1, 2, 2, 3, 0,       // Front
+        4, 5, 6, 6, 7, 4,       // Back
+        8, 9, 10, 10, 11, 8,    // Top
+        12, 13, 14, 14, 15, 12, // Bottom
+        16, 17, 18, 18, 19, 16, // Right
+        20, 21, 22, 22, 23, 20  // Left
+    };
 
-    vertices.assign(verticesArray, verticesArray + 24);
+    vertices.assign(verticesArray, verticesArray + 144); // 24 vertices * 6 floats each
     indices.assign(indicesArray, indicesArray + 36);
 }
 

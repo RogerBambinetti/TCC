@@ -7,11 +7,16 @@ namespace Shaders
     const char *vertexShaderSource = R"(
 #version 330 core
 layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec3 aNormal;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+out vec3 Normal;
+out vec3 FragPos;
 void main()
 {
+    FragPos = vec3(model * vec4(aPos, 1.0));
+    Normal = mat3(transpose(inverse(model))) * aNormal;
     gl_Position = projection * view * model * vec4(aPos, 1.0);
 }
 )";
@@ -20,14 +25,37 @@ void main()
     const char *fragmentShaderSource = R"(
 #version 330 core
 out vec4 FragColor;
+in vec3 Normal;
+in vec3 FragPos;
 uniform bool isSelected;
+uniform vec3 lightDir;
+uniform vec3 viewPos;
 void main()
 {
-    if (isSelected) {
-        FragColor = vec4(1.0, 0.5, 0.5, 1.0); // Light red when selected
-    } else {
-        FragColor = vec4(1.0, 1.0, 1.0, 1.0); // White color
-    }
+    // Lighting parameters
+    vec3 lightColor = vec3(1.0, 1.0, 1.0);
+    vec3 baseColor = isSelected ? vec3(1.0, 0.5, 0.5) : vec3(1.0, 1.0, 1.0);
+    
+    // Ambient
+    float ambientStrength = 0.3;
+    vec3 ambient = ambientStrength * lightColor;
+    
+    // Diffuse
+    vec3 norm = normalize(Normal);
+    vec3 lightDirection = normalize(-lightDir);
+    float diff = max(dot(norm, lightDirection), 0.0);
+    vec3 diffuse = diff * lightColor;
+    
+    // Specular
+    float specularStrength = 0.5;
+    vec3 viewDir = normalize(viewPos - FragPos);
+    vec3 reflectDir = reflect(-lightDirection, norm);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+    vec3 specular = specularStrength * spec * lightColor;
+    
+    // Final color
+    vec3 result = (ambient + diffuse + specular) * baseColor;
+    FragColor = vec4(result, 1.0);
 }
 )";
 

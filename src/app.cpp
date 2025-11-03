@@ -135,8 +135,12 @@ void Application::initializeGeometry()
     glBufferData(GL_ARRAY_BUFFER, cubeVertices.size() * sizeof(float), cubeVertices.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, cubeIndices.size() * sizeof(unsigned int), cubeIndices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    // Position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
+    // Normal attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     // Create VAO, VBO, and EBO for grid
     glGenVertexArrays(1, &gridVAO);
@@ -186,13 +190,19 @@ void Application::renderScene()
     glUseProgram(shaderProgram);
 
     // Create view matrix
-    viewMatrix = glm::lookAt(glm::vec3(5.0f, 5.0f, 5.0f),  // Camera position
+    glm::vec3 cameraPos = glm::vec3(5.0f, 5.0f, 5.0f);
+    viewMatrix = glm::lookAt(cameraPos,                    // Camera position
                              glm::vec3(0.0f, 0.0f, 0.0f),  // Looking at the center
                              glm::vec3(0.0f, 1.0f, 0.0f)); // Up vector
 
     // Pass view and projection matrices to the shader
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+
+    // Set lighting uniforms
+    glm::vec3 lightDir = glm::normalize(glm::vec3(-1.0f, -1.0f, -1.0f));
+    glUniform3fv(glGetUniformLocation(shaderProgram, "lightDir"), 1, glm::value_ptr(lightDir));
+    glUniform3fv(glGetUniformLocation(shaderProgram, "viewPos"), 1, glm::value_ptr(cameraPos));
 
     // Set selection uniform to false for non-selected objects
     glUniform1i(glGetUniformLocation(shaderProgram, "isSelected"), 0);
