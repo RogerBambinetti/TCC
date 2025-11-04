@@ -62,7 +62,7 @@ bool Application::initializeWindow()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create a windowed mode window and its OpenGL context
-    window = glfwCreateWindow(windowWidth, windowHeight, "3D GUI", NULL, NULL);
+    window = glfwCreateWindow(windowWidth, windowHeight, "CustomGeometryGenerator", NULL, NULL);
     if (!window)
     {
         std::cerr << "Failed to create GLFW window" << std::endl;
