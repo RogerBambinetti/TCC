@@ -1,6 +1,6 @@
 # Custom Geometry Generator
 
-Este é um projeto que utiliza OpenGL, GLFW e FreeType para gerar geometrias customizadas.
+Este projeto se trata de um módulo utilizado para gerar geometrias CICP customizadas para transcodificação de arquivos MPEG-H 3D Audio com o software de referência.
 
 ## Pré-requisitos
 
