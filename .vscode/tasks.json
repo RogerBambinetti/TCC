@@ -22,7 +22,7 @@
                 "-lglfw3dll",
                 "-lfreetype",
                 "-o",
-                "${workspaceFolder}/cutable.exe"
+                "${workspaceFolder}/CustomGeometryGenerator.exe"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
